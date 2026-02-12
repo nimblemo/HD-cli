@@ -71,10 +71,30 @@ hd-cli -d 1990-05-15 -t 14:30 -u +3 --format json > chart.json
 
 The project automatically downloads the necessary gates database during the build process (`build.rs`).
 
-To run tests:
+## Testing & Performance
+
+The project includes a comprehensive suite for verification and performance measurement.
+
+### Unit Tests
+Run the standard test suite to verify calculations:
 ```bash
 cargo test
 ```
+
+### Micro-benchmarking
+Measure the performance of core calculation functions using `criterion`:
+```bash
+cargo bench
+```
+
+### Load Testing
+Measure total throughput and parallel performance (calculates 10,000+ charts):
+```bash
+cargo run --example load_test --release
+```
+Typical performance results:
+- **Calculation speed**: ~80-120 µs per chart.
+- **Throughput**: ~8,000+ charts/sec (multi-threaded).
 
 ## License
 

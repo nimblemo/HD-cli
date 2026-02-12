@@ -1,11 +1,6 @@
-mod astro_calc;
-mod calc;
-mod cli;
-mod data;
-mod models;
-
 use clap::Parser;
-use cli::Cli;
+use hd_cli::cli::{self, Cli};
+use hd_cli::calc;
 
 fn main() {
     let args = Cli::parse();
