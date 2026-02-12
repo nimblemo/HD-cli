@@ -1,5 +1,5 @@
-/// 36 каналов Human Design
-/// Каждый канал: (gate_a, gate_b, center_a, center_b)
+/// 36 Human Design Channels
+/// Each channel: (gate_a, gate_b, center_a, center_b)
 use super::centers::Center;
 
 #[derive(Debug, Clone)]
@@ -20,11 +20,11 @@ impl ChannelDef {
     }
 }
 
-/// Все 36 каналов HD
+/// All 36 HD channels
 pub fn all_channels() -> Vec<ChannelDef> {
     use Center::*;
     vec![
-        // Формат каналов
+        // Format channels
         ChannelDef { gate_a: 64, gate_b: 47, center_a: Head, center_b: Ajna },
         ChannelDef { gate_a: 61, gate_b: 24, center_a: Head, center_b: Ajna },
         ChannelDef { gate_a: 63, gate_b: 4, center_a: Head, center_b: Ajna },
@@ -74,7 +74,7 @@ pub fn all_channels() -> Vec<ChannelDef> {
     ]
 }
 
-/// Найти активные каналы по набору активированных ворот
+/// Find active channels by set of active gates
 pub fn find_active_channels(active_gates: &[u8]) -> Vec<ChannelDef> {
     all_channels()
         .into_iter()
@@ -84,7 +84,7 @@ pub fn find_active_channels(active_gates: &[u8]) -> Vec<ChannelDef> {
         .collect()
 }
 
-/// Убрать дубликаты каналов (по ключу)
+/// Remove channel duplicates (by key)
 pub fn unique_channels(channels: Vec<ChannelDef>) -> Vec<ChannelDef> {
     let mut seen = std::collections::HashSet::new();
     channels

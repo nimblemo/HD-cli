@@ -1,8 +1,8 @@
-/// Выходные модели для сериализации
+/// Output models for serialization
 
 use serde::Serialize;
 
-/// Позиция планеты в карте
+/// Planet position in chart
 #[derive(Debug, Clone, Serialize)]
 pub struct PlanetPosition {
     pub planet: String,
@@ -22,121 +22,121 @@ pub struct PlanetPosition {
     pub line_description: Option<String>,
 }
 
-/// Информация о канале
+/// Channel info
 #[derive(Debug, Clone, Serialize)]
 pub struct ChannelInfo {
-    /// Ключ канала (e.g. "1-8")
+    /// Channel key (e.g. "1-8")
     pub key: String,
-    /// Название канала
+    /// Channel name
     pub name: String,
-    /// Описание (при --full)
+    /// Description (with --full)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 }
 
-/// Информация о центре
+/// Center info
 #[derive(Debug, Clone, Serialize)]
 pub struct CenterInfo {
-    /// Название центра
+    /// Center name
     pub name: String,
-    /// Определён ли
+    /// Is defined
     pub defined: bool,
-    /// Поведение (при --full)
+    /// Behavior (with --full)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub behavior: Option<String>,
 }
 
-/// Основная карта
+/// Main chart
 #[derive(Debug, Clone, Serialize)]
 pub struct HdChart {
-    /// Входные данные
+    /// Input data
     pub birth_date: String,
     pub birth_time: String,
     pub utc_offset: f64,
 
-    /// Тип
+    /// Type
     #[serde(rename = "type")]
     pub hd_type: String,
-    /// Описание типа (при --full)
+    /// Type description (with --full)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_description: Option<String>,
 
-    /// Профиль
+    /// Profile
     pub profile: String,
-    /// Описание профиля (при --full)
+    /// Profile description (with --full)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_description: Option<String>,
 
-    /// Авторитет
+    /// Authority
     pub authority: String,
-    /// Описание авторитета (при --full)
+    /// Authority description (with --full)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authority_description: Option<String>,
 
-    /// Стратегия
+    /// Strategy
     pub strategy: String,
-    /// Описание стратегии (при --full)
+    /// Strategy description (with --full)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub strategy_description: Option<String>,
 
-    /// Инкарнационный крест
+    /// Incarnation Cross
     pub incarnation_cross: String,
-    /// Описание креста (при --full)
+    /// Cross description (with --full)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cross_description: Option<String>,
 
-    /// Позиции планет (Личность)
+    /// Planet positions (Personality)
     pub personality: Vec<PlanetPosition>,
-    /// Позиции планет (Дизайн)
+    /// Planet positions (Design)
     pub design: Vec<PlanetPosition>,
 
-    /// Каналы
+    /// Channels
     pub channels: Vec<ChannelInfo>,
 
-    /// Центры
+    /// Centers
     pub centers: Vec<CenterInfo>,
 
-    /// Бизнес (при --full)
+    /// Business (with --full)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub business: Option<Vec<BusinessInfo>>,
 
-    /// Мотивация
+    /// Motivation
     #[serde(skip_serializing_if = "Option::is_none")]
     pub motivation: Option<Vec<InfoItem>>,
 
-    /// Среда
+    /// Environment
     #[serde(skip_serializing_if = "Option::is_none")]
     pub environment: Option<Vec<InfoItem>>,
 
-    /// Диета
+    /// Diet
     #[serde(skip_serializing_if = "Option::is_none")]
     pub diet: Option<Vec<InfoItem>>,
 
-    /// Страх
+    /// Fear
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fear: Option<String>,
 
-    /// Сексуальность
+    /// Sexuality
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sexuality: Option<String>,
 
-    /// Любовь
+    /// Love
     #[serde(skip_serializing_if = "Option::is_none")]
     pub love: Option<String>,
 
-    /// Видение (Perspective/View)
+    /// Perspective / Vision
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vision: Option<Vec<InfoItem>>,
 }
 
-/// Элемент дополнительной информации (Заголовок + Описание)
+/// Additional info item (Label + Description)
 #[derive(Debug, Clone, Serialize)]
 pub struct InfoItem {
     pub label: String,
     pub description: String,
 }
 
-/// Бизнес-информация от ворот
+/// Business info from gates
 #[derive(Debug, Clone, Serialize)]
 pub struct BusinessInfo {
     pub gate: u8,

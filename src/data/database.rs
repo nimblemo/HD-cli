@@ -1,107 +1,102 @@
 use serde::Deserialize;
 use std::collections::HashMap;
 
-/// Структура ворот (Gate)
+/// Gate structure
 #[derive(Debug, Deserialize, Clone)]
 pub struct GateData {
-    #[allow(dead_code)]
-    pub id: String,
     pub name: String,
     pub description: String,
     pub lines: HashMap<String, String>,
     #[serde(default)]
     pub crosses: Vec<String>,
     #[serde(default)]
-    pub business: Option<BusinessData>,
+    pub center: Option<String>,
     #[serde(default)]
-    pub sexuality: Option<SexualityData>,
+    pub across: Option<u8>,
+    #[serde(default)]
+    pub fear: Option<String>,
+    #[serde(default)]
+    pub sexuality: Option<String>,
+    #[serde(default)]
+    pub love: Option<String>,
+    #[serde(default)]
+    pub business: Option<String>,
+    #[serde(default)]
+    pub circuit: Option<String>,
+    #[serde(rename = "subCircuit")]
+    #[serde(default)]
+    pub sub_circuit: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct BusinessData {
-    pub title: String,
-    pub description: String,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct SexualityData {
-    pub title: String,
-    pub description: String,
-}
-
-/// Структура канала
+/// Channel structure
 #[derive(Debug, Deserialize, Clone)]
 pub struct ChannelData {
+    #[serde(default)]
+    pub name: Option<String>,
+    pub description: String,
+    #[serde(default)]
+    pub circuit: Option<String>,
+    #[serde(rename = "subCircuit")]
+    #[serde(default)]
+    pub sub_circuit: Option<String>,
+}
+
+/// Meta-object (for types, profiles, etc.)
+#[derive(Debug, Deserialize, Clone)]
+pub struct MetaObject {
     pub name: String,
     pub description: String,
 }
 
-/// Мотивация / Среда / Диета - с цветами и тонами
+/// Center data from DB
 #[derive(Debug, Deserialize, Clone)]
-pub struct ColorToneData {
+pub struct CenterData {
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+    pub normal: String,
+    pub distorted: String,
+}
+
+
+
+/// PHS Block (Colors/Tones)
+#[derive(Debug, Deserialize, Clone)]
+pub struct PhsBlock {
     #[serde(default)]
     pub colors: HashMap<String, String>,
     #[serde(default)]
-    #[allow(dead_code)]
     pub tones: HashMap<String, String>,
 }
 
-/// Данные тона диеты
-#[derive(Debug, Deserialize, Clone)]
-pub struct ToneData {
-    #[allow(dead_code)]
-    pub name: String,
-    #[allow(dead_code)]
-    pub description: String,
-}
-
-/// Диета
-#[derive(Debug, Deserialize, Clone)]
-pub struct DietData {
-    #[serde(default)]
-    pub colors: HashMap<String, String>,
-    #[serde(default)]
-    pub tones: HashMap<String, ToneData>,
-}
-
-/// Описание центра
-#[derive(Debug, Deserialize, Clone)]
-pub struct CenterBehavior {
-    #[serde(rename = "normalBehavior")]
-    pub normal_behavior: String,
-    #[serde(rename = "distortedBehavior")]
-    pub distorted_behavior: String,
-}
-
-/// Главная структура базы данных
+/// Main database structure
 #[derive(Debug, Deserialize)]
 pub struct HdDatabase {
     pub gates: HashMap<String, GateData>,
     pub channels: HashMap<String, ChannelData>,
-    pub profiles: HashMap<String, String>,
-    pub types: HashMap<String, String>,
+    pub centers: HashMap<String, CenterData>,
+    pub types: HashMap<String, MetaObject>,
+    pub profiles: HashMap<String, MetaObject>,
     #[serde(default)]
-    pub strategies: HashMap<String, String>,
-    #[serde(default)]
-    pub authorities: HashMap<String, String>,
-    #[serde(default)]
-    pub centers: HashMap<String, CenterBehavior>,
+    pub strategies: HashMap<String, String>, 
+    pub authorities: HashMap<String, MetaObject>,
     #[serde(default)]
     pub fears: HashMap<String, String>,
     #[serde(default)]
-    pub motivation: Option<ColorToneData>,
+    pub motivation: Option<PhsBlock>,
     #[serde(default)]
-    pub environment: Option<ColorToneData>,
+    pub environment: Option<PhsBlock>,
     #[serde(default)]
-    pub diet: Option<DietData>,
+    pub diet: Option<PhsBlock>,
     #[serde(default)]
-    pub vision: Option<ColorToneData>,
+    pub vision: Option<PhsBlock>,
     #[serde(default)]
-    pub crosses: HashMap<String, String>,
+    pub crosses: HashMap<String, MetaObject>,
 }
 
 use once_cell::sync::Lazy;
 
+// Path relative to src/data/database.rs -> ../../data/gates_database.json
 const DEFAULT_DB_JSON: &str = include_str!("../../data/gates_database.json");
 
 static DEFAULT_DB: Lazy<HdDatabase> = Lazy::new(|| {
@@ -110,13 +105,12 @@ static DEFAULT_DB: Lazy<HdDatabase> = Lazy::new(|| {
     })
 });
 
-/// Получить базу данных (встроенную или загруженную по языку)
+/// Get database (embedded or loaded by language)
 pub fn get_database(lang: &str) -> &'static HdDatabase {
     if lang == "ru" {
         &DEFAULT_DB
     } else {
-        // Для других языков пока возвращаем дефолтную
-        // В будущем — загрузка data/gates_database_{lang}.json рядом с бинарником
+        // For other languages return default for now
         eprintln!("Язык '{}' не найден, используется 'ru'", lang);
         &DEFAULT_DB
     }

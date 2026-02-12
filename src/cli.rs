@@ -1,4 +1,4 @@
-/// CLI интерфейс: аргументы, форматирование вывода
+/// CLI interface: arguments, output formatting
 
 use clap::{Parser, ValueEnum};
 use crate::models::HdChart;
@@ -7,54 +7,58 @@ use colored::*;
 use terminal_size::{Width, terminal_size};
 use textwrap::Options;
 
-/// Формат вывода
+/// Output format
 #[derive(Debug, Clone, ValueEnum)]
 pub enum OutputFormat {
-    /// Форматированная таблица в терминале
+    /// Formatted table in terminal
     Table,
-    /// JSON формат
+    /// JSON format
     Json,
-    /// YAML формат
+    /// YAML format
     Yaml,
 }
 
-/// Human Design CLI — расчёт карты Дизайна Человека
+/// Human Design CLI — Human Design chart calculation
 ///
-/// Рассчитывает полную карту Дизайна Человека по дате, времени рождения
-/// и часовому поясу (UTC-смещение). Поддерживает вывод в формате таблицы,
-/// JSON или YAML. Используйте --short для скрытия детальных описаний.
+/// Calculates full Human Design chart by date, time of birth
+/// and time zone (UTC offset). Supports output in table,
+/// JSON or YAML format. Use --short to hide detailed descriptions.
 #[derive(Parser, Debug)]
 #[command(name = "hd-cli")]
 #[command(version = "0.1.0")]
 #[command(about = "Human Design CLI — расчёт карты Дизайна Человека")]
 #[command(long_about = "Рассчитывает полную карту HD по дате/времени рождения и UTC-смещению.\n\nПример:\n  hd-cli --date 1990-05-15 --time 14:30 --utc +3\n  hd-cli --date 1990-05-15 --time 14:30 --utc +3 --format json\n  hd-cli --date 1990-05-15 --time 14:30 --utc +3 --short")]
 pub struct Cli {
-    /// Дата рождения в формате YYYY-MM-DD (например: 1990-05-15)
+    /// Date of birth in YYYY-MM-DD format (e.g. 1990-05-15)
     #[arg(short = 'd', long)]
     pub date: String,
 
-    /// Время рождения в формате HH:MM (например: 14:30)
+    /// Time of birth in HH:MM format (e.g. 14:30)
     #[arg(short = 't', long)]
     pub time: String,
 
-    /// Часовой пояс как UTC-смещение (например: +3, -5, +5.5)
+    /// Time zone as UTC offset (e.g. +3, -5, +5.5)
     #[arg(short = 'u', long)]
     pub utc: String,
 
-    /// Формат вывода: table (по умолчанию), json, yaml
+    /// Output format: table (default), json, yaml
     #[arg(short = 'f', long, default_value = "table")]
     pub format: OutputFormat,
 
-    /// Краткий вывод (скрыть детальные описания ворот, линий, каналов и центров)
+    /// Short output (hide detailed descriptions of gates, lines, channels and centers)
     #[arg(long)]
     pub short: bool,
 
-    /// Язык описаний (по умолчанию: ru). Определяет файл данных gates_database_{lang}.json
+    /// Description language (default: ru). Determines data file gates_database_{lang}.json
     #[arg(short = 'l', long, default_value = "ru")]
     pub lang: String,
+
+    /// Save output to file. If filename is not specified, it will be generated automatically.
+    #[arg(long, num_args(0..=1), default_missing_value = "default")]
+    pub save: Option<String>,
 }
 
-/// Парсинг даты из строки YYYY-MM-DD
+/// Parse date from YYYY-MM-DD string
 pub fn parse_date(s: &str) -> Result<(i32, u8, u8), String> {
     let parts: Vec<&str> = s.split('-').collect();
     if parts.len() != 3 {
@@ -73,7 +77,7 @@ pub fn parse_date(s: &str) -> Result<(i32, u8, u8), String> {
     Ok((year, month, day))
 }
 
-/// Парсинг времени из строки HH:MM
+/// Parse time from HH:MM string
 pub fn parse_time(s: &str) -> Result<(u8, u8), String> {
     let parts: Vec<&str> = s.split(':').collect();
     if parts.len() != 2 {
@@ -91,7 +95,7 @@ pub fn parse_time(s: &str) -> Result<(u8, u8), String> {
     Ok((hour, min))
 }
 
-/// Парсинг UTC-смещения из строки (+3, -5, +5.5)
+/// Parse UTC offset from string (+3, -5, +5.5)
 pub fn parse_utc_offset(s: &str) -> Result<f64, String> {
     let s = s.trim();
     let offset: f64 = s.parse().map_err(|_| {
@@ -103,101 +107,133 @@ pub fn parse_utc_offset(s: &str) -> Result<f64, String> {
     Ok(offset)
 }
 
-/// Вывод карты в указанном формате
-pub fn output_chart(chart: &HdChart, format: &OutputFormat) {
+/// Generate chart output string
+pub fn generate_output(chart: &HdChart, format: &OutputFormat, plain: bool) -> String {
     match format {
-        OutputFormat::Json => {
-            let json = serde_json::to_string_pretty(chart).unwrap();
-            println!("{}", json);
-        }
-        OutputFormat::Yaml => {
-            let yaml = serde_yaml::to_string(chart).unwrap();
-            println!("{}", yaml);
-        }
-        OutputFormat::Table => {
-            print_table(chart);
-        }
+        OutputFormat::Json => serde_json::to_string_pretty(chart).unwrap(),
+        OutputFormat::Yaml => serde_yaml::to_string(chart).unwrap(),
+        OutputFormat::Table => build_table_string(chart, plain),
     }
 }
 
-fn print_table(chart: &HdChart) {
-    // Заголовок
-    println!("\n{}", "═══════════════════════════════════════════════════════════════".truecolor(95, 158, 160));
-    println!("{}", "              HUMAN DESIGN — КАРТА РОЖДЕНИЯ".truecolor(255, 255, 255).bold());
-    println!("{}", "═══════════════════════════════════════════════════════════════".truecolor(95, 158, 160));
+// Deprecated in favor of generate_output + println! in main
+pub fn output_chart(chart: &HdChart, format: &OutputFormat) {
+    println!("{}", generate_output(chart, format, false));
+}
 
-    // Основная информация
-    println!("\n{}", "  ОСНОВНЫЕ ДАННЫЕ".truecolor(95, 158, 160).bold());
-    println!(); // Отступ после подзаголовка
+use std::fmt::Write;
+
+fn build_table_string(chart: &HdChart, plain: bool) -> String {
+    let mut out = String::new();
+
+    // Disable colors globally for colored if plain=true
+    if plain {
+        colored::control::set_override(false);
+    }
+
+    // Header
+    writeln!(out, "\n{}", "═══════════════════════════════════════════════════════════════".truecolor(95, 158, 160)).unwrap();
+    writeln!(out, "{}", "              HUMAN DESIGN — КАРТА РОЖДЕНИЯ".truecolor(255, 255, 255).bold()).unwrap();
+    writeln!(out, "{}", "═══════════════════════════════════════════════════════════════".truecolor(95, 158, 160)).unwrap();
+
+    // Main information
+    writeln!(out, "\n{}", "  ОСНОВНЫЕ ДАННЫЕ".truecolor(95, 158, 160).bold()).unwrap();
+    writeln!(out).unwrap(); // Spacing
     
-    let label_color = |s: &str| s.truecolor(255, 160, 122); // Soft Coral (was Gold)
-    let value_color = |s: &str| s.truecolor(255, 160, 122); // Soft Coral
-    let desc_color = 230_u8; // Beige R
-    let desc_color_g = 228_u8; // Beige G
-    let desc_color_b = 208_u8; // Beige B
+    let label_color = |s: &str| s.truecolor(255, 160, 122); // Soft Coral
+    let value_color = |s: &str| s.truecolor(255, 215, 0); // Gold
+    let desc_color = colored::Color::TrueColor { r: 230, g: 228, b: 208 }; // Beige
 
-    println!("  {} {} {} UTC{}",
+    // Helper for conditional table cell formatting
+    let add_style = |cell: Cell, color: TableColor, bold: bool| -> Cell {
+        if plain {
+            cell
+        } else {
+            let mut c = cell.fg(color);
+            if bold {
+                c = c.add_attribute(Attribute::Bold);
+            }
+            c
+        }
+    };
+
+
+    writeln!(out, "  {} {} {} UTC{}",
         label_color("Дата:"),
         value_color(&chart.birth_date),
         value_color(&chart.birth_time),
         value_color(&format!("{:+}", chart.utc_offset))
-    );
-    println!("  {} {}",
+    ).unwrap();
+    writeln!(out).unwrap(); // Empty line after Date for spacing
+
+
+    writeln!(out, "  {} {}",
         label_color("Тип:"),
         value_color(&chart.hd_type).bold()
-    );
+    ).unwrap();
     if let Some(ref desc) = chart.type_description {
-        print_wrapped(desc, 2, Some(colored::Color::TrueColor { r: desc_color, g: desc_color_g, b: desc_color_b }), false);
+        write_wrapped(&mut out, desc, 4, Some(desc_color), false);
     }
-    println!("  {} {}",
+    writeln!(out).unwrap(); // Empty line after item
+
+
+    writeln!(out, "  {} {}",
         label_color("Профиль:"),
         value_color(&chart.profile).bold()
-    );
+    ).unwrap();
     if let Some(ref desc) = chart.profile_description {
-        print_wrapped(desc, 2, Some(colored::Color::TrueColor { r: desc_color, g: desc_color_g, b: desc_color_b }), false);
+        write_wrapped(&mut out, desc, 4, Some(desc_color), false);
     }
-    println!("  {} {}",
+    writeln!(out).unwrap(); // Empty line after item
+
+
+    writeln!(out, "  {} {}",
         label_color("Авторитет:"),
         value_color(&chart.authority).bold()
-    );
+    ).unwrap();
     if let Some(ref desc) = chart.authority_description {
-        print_wrapped(desc, 2, Some(colored::Color::TrueColor { r: desc_color, g: desc_color_g, b: desc_color_b }), false);
+        write_wrapped(&mut out, desc, 4, Some(desc_color), false);
     }
-    println!("  {} {}",
+    writeln!(out).unwrap(); // Empty line after item
+
+
+    writeln!(out, "  {} {}",
         label_color("Стратегия:"),
         value_color(&chart.strategy).bold()
-    );
+    ).unwrap();
     if let Some(ref desc) = chart.strategy_description {
-        print_wrapped(desc, 2, Some(colored::Color::TrueColor { r: desc_color, g: desc_color_g, b: desc_color_b }), false);
+        write_wrapped(&mut out, desc, 4, Some(desc_color), false);
     }
-    println!("  {} {}", label_color("Инкарнационный крест:"), value_color(&chart.incarnation_cross).bold());
-    if let Some(ref desc) = chart.cross_description {
-        print_wrapped(desc, 2, Some(colored::Color::TrueColor { r: desc_color, g: desc_color_g, b: desc_color_b }), false);
-    }
+    writeln!(out).unwrap(); // Empty line after item
 
-    // Бизнес (перемещен сюда)
+
+    writeln!(out, "  {} {}", label_color("Инкарнационный крест:"), value_color(&chart.incarnation_cross).bold()).unwrap();
+    if let Some(ref desc) = chart.cross_description {
+        write_wrapped(&mut out, desc, 4, Some(desc_color), false);
+    }
+    writeln!(out).unwrap(); // Empty line after item
+
+
+    // Business
     if let Some(ref biz) = chart.business {
-        println!("\n{}", "  БИЗНЕС".truecolor(95, 158, 160).bold());
-        println!(); // Отступ
+        writeln!(out, "\n{}", "  БИЗНЕС".truecolor(95, 158, 160).bold()).unwrap();
+        writeln!(out).unwrap(); // Spacing
 
         for b in biz {
-            println!("  {} {}:",
-                format!("Ворота {}:", b.gate).truecolor(255, 160, 122),
-                b.title.truecolor(255, 160, 122)
-            );
+            writeln!(out, "  {} {}:",
+                format!("Ворота {}:", b.gate).truecolor(255, 160, 122), // Coral
+                b.title.truecolor(255, 215, 0) // Gold
+            ).unwrap();
             if let Some(ref desc) = b.description {
-                print_wrapped(desc, 4, Some(colored::Color::TrueColor { r: desc_color, g: desc_color_g, b: desc_color_b }), false);
+                write_wrapped(&mut out, desc, 4, Some(desc_color), false);
             }
         }
     }
 
-    // 4. Планеты (Общая таблица)
-    print_combined_planet_table(&chart.design, &chart.personality);
-
-    // 5. Каналы
+    // 4. CHANNELS (Moved here, after Business)
     if !chart.channels.is_empty() {
-        println!("\n{}", "  КАНАЛЫ".truecolor(95, 158, 160).bold());
-        println!(); // Отступ
+        writeln!(out, "\n{}", "  КАНАЛЫ".truecolor(95, 158, 160).bold()).unwrap();
+        writeln!(out).unwrap(); // Отступ
         
         let has_descriptions = chart.channels.iter().any(|ch| ch.description.is_some());
 
@@ -207,31 +243,34 @@ fn print_table(chart: &HdChart) {
             .set_content_arrangement(ContentArrangement::Dynamic);
         
         let mut headers = vec![
-            Cell::new("Канал").add_attribute(Attribute::Bold).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }),
-            Cell::new("Название").add_attribute(Attribute::Bold).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }),
+            add_style(Cell::new("Канал"), TableColor::Rgb { r: 255, g: 160, b: 122 }, true), // Coral
+            add_style(Cell::new("Название"), TableColor::Rgb { r: 255, g: 215, b: 0 }, true), // Gold
         ];
         if has_descriptions {
-            headers.push(Cell::new("Описание").add_attribute(Attribute::Bold).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }));
+            headers.push(add_style(Cell::new("Описание"), TableColor::Rgb { r: 255, g: 160, b: 122 }, true)); // Coral
         }
         table.set_header(headers);
 
         for ch in &chart.channels {
              let mut row = vec![
-                Cell::new(&ch.key).fg(TableColor::Rgb { r: 95, g: 158, b: 160 }),
-                Cell::new(&ch.name).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }).add_attribute(Attribute::Bold),
+                add_style(Cell::new(&ch.key), TableColor::Rgb { r: 95, g: 158, b: 160 }, false),
+                add_style(Cell::new(&ch.name), TableColor::Rgb { r: 255, g: 215, b: 0 }, true), // Gold
              ];
              if has_descriptions {
                 let desc = ch.description.clone().unwrap_or_default();
-                row.push(Cell::new(&desc).fg(TableColor::Rgb { r: desc_color, g: desc_color_g, b: desc_color_b }));
+                row.push(add_style(Cell::new(&desc), TableColor::Rgb { r: 230, g: 228, b: 208 }, false));
              }
              table.add_row(row);
         }
-        println!("{}", table);
+        writeln!(out, "{}", table).unwrap();
     }
 
-    // Центры
-    println!("\n{}", "  ЦЕНТРЫ".truecolor(95, 158, 160).bold());
-    println!(); // Отступ
+    // 5. Planets (General table) (Now here)
+    write_combined_planet_table(&mut out, &chart.design, &chart.personality, plain);
+
+    // Centers
+    writeln!(out, "\n{}", "  ЦЕНТРЫ".truecolor(95, 158, 160).bold()).unwrap();
+    writeln!(out).unwrap(); // Spacing
 
     let mut table = Table::new();
     table
@@ -239,15 +278,14 @@ fn print_table(chart: &HdChart) {
         .set_content_arrangement(ContentArrangement::Dynamic);
 
     table.set_header(vec![
-        Cell::new("Центр").add_attribute(Attribute::Bold).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }),
-        Cell::new("Описание / Статус").add_attribute(Attribute::Bold).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }),
+        add_style(Cell::new("Центр"), TableColor::Rgb { r: 255, g: 160, b: 122 }, true),
+        add_style(Cell::new("Описание / Статус"), TableColor::Rgb { r: 255, g: 160, b: 122 }, true),
     ]);
     for center in &chart.centers {
         let status = if center.defined { "● Определён" } else { "○ Открыт" };
-        let height_color = if center.defined { TableColor::Rgb { r: 255, g: 160, b: 122 } } else { TableColor::DarkGrey };
+        let height_color = if center.defined { TableColor::Rgb { r: 255, g: 215, b: 0 } } else { TableColor::DarkGrey }; // Gold for defined
         let color = height_color;
         
-        // Если есть поведение (full mode), показываем его. Иначе статус.
         let content = if let Some(ref beh) = center.behavior {
             beh.clone()
         } else {
@@ -255,109 +293,95 @@ fn print_table(chart: &HdChart) {
         };
 
         table.add_row(vec![
-            Cell::new(&center.name).fg(color).add_attribute(Attribute::Bold),
-            Cell::new(&content).fg(TableColor::Rgb { r: desc_color, g: desc_color_g, b: desc_color_b }),
+            add_style(Cell::new(&center.name), color, true),
+            add_style(Cell::new(&content), TableColor::Rgb { r: 230, g: 228, b: 208 }, false),
         ]);
     }
-    println!("{}", table);
+    writeln!(out, "{}", table).unwrap();
 
-    // Дополнительная информация - показываем, если есть хоть что-то
+    // Additional information
     let has_extra = chart.motivation.is_some() || chart.environment.is_some()
         || chart.diet.is_some() || chart.fear.is_some()
         || chart.sexuality.is_some() || chart.love.is_some() || chart.vision.is_some();
     
-    // Показываем блок дополнительно только если включен режим --full, 
-    // ТАК КАК в calc.rs мы теперь всегда вычисляем эти поля. 
-    // Если пользователь хочет видеть их всегда, уберем проверку.
-    // Но обычно в CLI "Additional info" скрывают.
-    // Однако, задача "Add name" к Motivation/Diet подразумевает, что пользователь хочет это видеть.
-    // Ранее условие было `has_extra` (которое зависело от того, вернул ли calc что-то).
-    // Теперь calc возвращает всегда (если в БД есть).
-    // Оставим показ ВНЕ зависимости от full, но только если поля есть.
-    // НО layout user request: "Additional Info Block: Conditionally hidden unless the --full flag is present". 
-    // Wait, the previous session summary said "Conditionally hidden unless the --full flag is present".
-    // I should check `if chart.motivation.is_some() && has_extra`.
-
-    // NOTE: In `calc.rs` I removed `if full` check for motivation/diet calculation.
-    // So `has_extra` will be true if DB matches.
-    // If I want to hide it, I should check `full` here? 
-    // Or did I misuse `full` in `calc.rs`? 
-    // In `calc.rs` I passed `full` to `build_chart`, but only used it for some descriptions.
-    // 
-    // Decision: Show it always if available, OR restrict to Full?
-    // Summary said: "Additional Info Block: Conditionally hidden unless the --full flag is present".
-    // I will respect that constraint from previous summary.
-    // But how do I know if `full` is enabled here in `print_table`?
-    // `print_table` takes `&HdChart`. `HdChart` doesn't store `full` flag status explicitly (only implicitly via presence of optional fields).
-    // BUT `motivaton` is now always present (if db has it).
-    //
-    // I'll check `chart.strategy_description` presence as a proxy for `full` mode? 
-    // Or just print it. The user explicitly asked to REFINE this.
-    // "Additional Info Block: Conditionally hidden unless the --full flag is present" -> this means I should check something.
-    // `type_description` is only set if `full` is true.
-    
-    let is_full_mode = chart.type_description.is_some();
+    let is_full_mode = chart.type_description.is_some(); 
 
     if has_extra && is_full_mode {
-        println!("\n{}", "  ДОПОЛНИТЕЛЬНО".truecolor(95, 158, 160).bold());
-        println!(); // Отступ
+        writeln!(out, "\n{}", "  ДОПОЛНИТЕЛЬНО".truecolor(95, 158, 160).bold()).unwrap();
+        writeln!(out).unwrap(); // Spacing
 
         if let Some(ref m) = chart.motivation {
-            print_info_items("Мотивация:", m);
+            write_info_items(&mut out, "Мотивация:", m);
         }
         if let Some(ref v) = chart.vision {
-            print_info_items("Видение:", v);
+            write_info_items(&mut out, "Видение:", v);
         }
         if let Some(ref e) = chart.environment {
-             print_info_items("Среда:", e);
+             write_info_items(&mut out, "Среда:", e);
         }
         if let Some(ref d) = chart.diet {
-             print_info_items("Диета:", d);
+             write_info_items(&mut out, "Диета:", d);
         }
         if let Some(ref f) = chart.fear {
-             print_kv_wrapped("Страх:", f);
+             write_kv_wrapped(&mut out, "Страх:", f);
         }
         if let Some(ref s) = chart.sexuality {
-             print_kv_wrapped("Сексуальность:", s);
+             write_kv_wrapped(&mut out, "Сексуальность:", s);
         }
         if let Some(ref l) = chart.love {
-             print_kv_wrapped("Любовь:", l);
+             write_kv_wrapped(&mut out, "Любовь:", l);
         }
     }
 
-
+    out
 }
 
-fn print_info_items(title: &str, items: &[crate::models::InfoItem]) {
-    println!("  {}", title.truecolor(255, 160, 122)); // Soft Coral (was Gold)
+fn write_info_items(out: &mut String, title: &str, items: &[crate::models::InfoItem]) {
+    writeln!(out, "  {}", title.truecolor(255, 215, 0)).unwrap(); // Gold Title
     
     let label_color = colored::Color::TrueColor { r: 255, g: 160, b: 122 };
     let desc_color = colored::Color::TrueColor { r: 230, g: 228, b: 208 };
 
     for item in items {
-        println!("    {}", item.label.color(label_color));
+        writeln!(out, "    {}", item.label.color(label_color)).unwrap();
         if !item.description.is_empty() {
-            print_wrapped(&item.description, 6, Some(desc_color), false);
+            write_wrapped(out, &item.description, 6, Some(desc_color), false);
         }
     }
 }
 
 
-fn print_combined_planet_table(design: &[crate::models::PlanetPosition], personality: &[crate::models::PlanetPosition]) {
-    println!("\n{}", "  ПЛАНЕТЫ (Planets)".truecolor(95, 158, 160).bold());
-    println!(); // Отступ
+fn write_combined_planet_table(out: &mut String, design: &[crate::models::PlanetPosition], personality: &[crate::models::PlanetPosition], plain: bool) {
+    writeln!(out, "\n{}", "  ПЛАНЕТЫ (Planets)".truecolor(95, 158, 160).bold()).unwrap();
+    // Removed extra newline here
+
+
+    let tc_label = TableColor::Rgb { r: 255, g: 160, b: 122 };
+    let tc_white = TableColor::White;
+
+    let add_style = |cell: Cell, color: TableColor, bold: bool| -> Cell {
+        if plain {
+            cell
+        } else {
+            let mut c = cell.fg(color);
+            if bold {
+                c = c.add_attribute(Attribute::Bold);
+            }
+            c
+        }
+    };
 
     let mut table = Table::new();
     table
         .load_preset(presets::UTF8_FULL)
         .set_content_arrangement(ContentArrangement::Dynamic)
         .set_header(vec![
-            Cell::new("Планета").add_attribute(Attribute::Bold).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }),
-            Cell::new("Ворота.Линия").add_attribute(Attribute::Bold).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }),
-            Cell::new("Знак").add_attribute(Attribute::Bold).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }),
-            Cell::new("Знак").add_attribute(Attribute::Bold).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }),
-            Cell::new("Ворота.Линия").add_attribute(Attribute::Bold).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }),
-            Cell::new("Планета").add_attribute(Attribute::Bold).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }),
+            add_style(Cell::new("Планета"), tc_label, true),
+            add_style(Cell::new("Ворота.Линия"), tc_label, true),
+            add_style(Cell::new("Знак"), tc_label, true),
+            add_style(Cell::new("Знак"), tc_label, true),
+            add_style(Cell::new("Ворота.Линия"), tc_label, true),
+            add_style(Cell::new("Планета"), tc_label, true),
         ]);
 
     
@@ -369,18 +393,18 @@ fn print_combined_planet_table(design: &[crate::models::PlanetPosition], persona
         let pers_gate_line = format!("{}.{}", pers.gate, pers.line);
 
         table.add_row(vec![
-            Cell::new(&des.planet).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }), // Soft Coral (was Coral)
-            Cell::new(&des_gate_line).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }).add_attribute(Attribute::Bold),
-            Cell::new(&des_sign).fg(TableColor::Rgb { r: 255, g: 160, b: 122 }),
-            Cell::new(&pers_sign).fg(TableColor::White), // Personality in White for visibility
-            Cell::new(&pers_gate_line).fg(TableColor::White).add_attribute(Attribute::Bold),
-            Cell::new(&pers.planet).fg(TableColor::White),
+            add_style(Cell::new(&des.planet), tc_label, false),
+            add_style(Cell::new(&des_gate_line), tc_label, true),
+            add_style(Cell::new(&des_sign), tc_label, false),
+            add_style(Cell::new(&pers_sign), tc_white, false),
+            add_style(Cell::new(&pers_gate_line), tc_white, true),
+            add_style(Cell::new(&pers.planet), tc_white, false),
         ]);
     }
 
-    println!("{}", table);
+    writeln!(out, "{}", table).unwrap();
 
-    // Вывод описаний (Дизайн + Личность) - только если есть описания
+    // Output descriptions (Design + Personality) - only if descriptions exist
     let has_descriptions = personality.iter().any(|p| p.gate_description.is_some());
     
     if has_descriptions {
@@ -391,20 +415,20 @@ fn print_combined_planet_table(design: &[crate::models::PlanetPosition], persona
         };
 
         // Standardized Headers
-        println!("\n{}", "  ОПИСАНИЯ ЛИЧНОСТИ (Personality)".truecolor(95, 158, 160).bold());
-        println!(); // Отступ
-        print_descriptions(personality, term_width);
+        writeln!(out, "\n{}", "  ОПИСАНИЯ ЛИЧНОСТИ (Personality)".truecolor(95, 158, 160).bold()).unwrap();
+        // Removed extra newline here
+        write_descriptions(out, personality, term_width);
 
-        println!("\n{}", "  ОПИСАНИЯ ДИЗАЙНА (Design)".truecolor(95, 158, 160).bold());
-        println!(); // Отступ
-        print_descriptions(design, term_width);
+        writeln!(out, "\n{}", "  ОПИСАНИЯ ДИЗАЙНА (Design)".truecolor(95, 158, 160).bold()).unwrap();
+        // Removed extra newline here
+        write_descriptions(out, design, term_width);
     }
 }
 
-fn print_descriptions(data: &[crate::models::PlanetPosition], _term_width: usize) {
+fn write_descriptions(out: &mut String, data: &[crate::models::PlanetPosition], _term_width: usize) {
     let desc_color = colored::Color::TrueColor { r: 230, g: 228, b: 208 }; // Beige
-    let label_color = colored::Color::TrueColor { r: 255, g: 160, b: 122 }; // Soft Coral (was Gold)
-    let value_color = colored::Color::TrueColor { r: 255, g: 160, b: 122 }; // Soft Coral
+    let label_color = colored::Color::TrueColor { r: 255, g: 160, b: 122 }; // Soft Coral
+    let value_color = colored::Color::TrueColor { r: 255, g: 215, b: 0 }; // Gold
 
     for p in data {
         if let (Some(g_desc), Some(l_desc)) = (&p.gate_description, &p.line_description) {
@@ -415,18 +439,17 @@ fn print_descriptions(data: &[crate::models::PlanetPosition], _term_width: usize
             };
             
             // Header for Gate
-            // Planet (Label/Gold/Bold) - Gate Info (Value/Coral/Bold)
-            println!("\n  {} - {}", p.planet.color(label_color).bold(), gate_info.color(value_color).bold());
-            print_wrapped(g_desc, 4, Some(desc_color), false);
+            writeln!(out, "\n  {} - {}", p.planet.color(label_color).bold(), gate_info.color(value_color).bold()).unwrap();
+            write_wrapped(out, g_desc, 4, Some(desc_color), false);
 
             // Header for Line (Label/Gold/Bold)
-            println!("    {}", format!("Линия {}:", p.line).color(label_color).bold());
-            print_wrapped(l_desc, 6, Some(desc_color), false);
+            writeln!(out, "    {}", format!("Линия {}:", p.line).color(label_color).bold()).unwrap();
+            write_wrapped(out, l_desc, 6, Some(desc_color), false);
         }
     }
 }
 
-fn print_wrapped(text: &str, indent: usize, color: Option<colored::Color>, dimmed: bool) {
+fn write_wrapped(out: &mut String, text: &str, indent: usize, color: Option<colored::Color>, dimmed: bool) {
     let width = if let Some((Width(w), _)) = terminal_size() {
         w as usize
     } else {
@@ -450,10 +473,10 @@ fn print_wrapped(text: &str, indent: usize, color: Option<colored::Color>, dimme
         style = style.dimmed();
     }
     
-    println!("{}", style);
+    writeln!(out, "{}", style).unwrap();
 }
 
-fn print_kv_wrapped(key: &str, value: &str) {
-    println!("  {}", key.truecolor(255, 160, 122)); // Soft Coral (was Gold)
-    print_wrapped(value, 4, Some(colored::Color::TrueColor { r: 230, g: 228, b: 208 }), false);
+fn write_kv_wrapped(out: &mut String, key: &str, value: &str) {
+    writeln!(out, "  {}", key.truecolor(255, 160, 122)).unwrap(); // Soft Coral
+    write_wrapped(out, value, 4, Some(colored::Color::TrueColor { r: 230, g: 228, b: 208 }), false);
 }

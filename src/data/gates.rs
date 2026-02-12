@@ -1,11 +1,11 @@
-/// Маппинг HD Wheel: 64 ворот расположены по зодиакальному кругу (360°).
-/// Каждые ворота = 5°37'30" = 5.625°
-/// Каждая линия = 56'15" = 0.9375°
+/// HD Wheel Mapping: 64 gates located on the zodiac circle (360°).
+/// Each gate = 5°37'30" = 5.625°
+/// Each line = 56'15" = 0.9375°
 ///
-/// Порядок начинается с Ворот 41 при 2°00' Водолея (= 302° эклиптики)
-/// и идёт по часовой стрелке через все 64 ворот.
+/// Order starts with Gate 41 at 2°00' Aquarius (= 302° ecliptic)
+/// and goes clockwise through all 64 gates.
 
-/// Порядок 64 ворот по HD Wheel (начиная с Gate 41)
+/// Order of 64 gates on HD Wheel (starting from Gate 41)
 pub const GATE_ORDER: [u8; 64] = [
     41, 19, 13, 49, 30, 55, 37, 63,
     22, 36, 25, 17, 21, 51, 42, 3,
@@ -17,19 +17,19 @@ pub const GATE_ORDER: [u8; 64] = [
     26, 11, 10, 58, 38, 54, 61, 60,
 ];
 
-/// Начальный градус HD Wheel (Ворота 41 начинаются при 302.0° эклиптики)
+/// Initial HD Wheel degree (Gate 41 starts at 302.0° ecliptic)
 pub const WHEEL_START_DEGREE: f64 = 302.0;
 
-/// Размер одних ворот в градусах (5°37'30")
+/// Size of one gate in degrees (5°37'30")
 pub const GATE_SIZE_DEG: f64 = 5.625;
 
-/// Размер одной линии в градусах (56'15")
+/// Size of one line in degrees (56'15")
 pub const LINE_SIZE_DEG: f64 = 0.9375;
 
-/// Размер одного цвета в градусах (линия / 6)
+/// Size of one color in degrees (line / 6)
 pub const COLOR_SIZE_DEG: f64 = 0.15625;
 
-/// Результат конвертации градуса эклиптики в позицию HD
+/// Result of converting ecliptic degree to HD position
 #[derive(Debug, Clone)]
 pub struct GatePosition {
     pub gate: u8,
@@ -40,47 +40,47 @@ pub struct GatePosition {
     pub degree: f64,
 }
 
-/// Конвертация эклиптического градуса в ворота/линию/цвет/тон/базу
+/// Convert ecliptic degree to gate/line/color/tone/base
 pub fn degree_to_gate(ecliptic_deg: f64) -> GatePosition {
-    // Нормализуем градус в 0..360
+    // Normalize degree to 0..360
     let mut deg = ecliptic_deg % 360.0;
     if deg < 0.0 {
         deg += 360.0;
     }
 
-    // Смещение от начала колеса
+    // Offset from wheel start
     let mut offset = deg - WHEEL_START_DEGREE;
     if offset < 0.0 {
         offset += 360.0;
     }
 
-    // Индекс ворот (0..63)
+    // Gate index (0..63)
     let gate_index = (offset / GATE_SIZE_DEG).floor() as usize;
     let gate_index = gate_index.min(63);
 
-    // Смещение внутри ворот
+    // Offset within gate
     let within_gate = offset - (gate_index as f64) * GATE_SIZE_DEG;
 
-    // Линия (1..6)
+    // Line (1..6)
     let line_index = (within_gate / LINE_SIZE_DEG).floor() as u8;
     let line = (line_index + 1).min(6);
 
-    // Смещение внутри линии
+    // Offset within line
     let within_line = within_gate - (line_index as f64) * LINE_SIZE_DEG;
 
-    // Цвет (1..6)
+    // Color (1..6)
     let color_index = (within_line / COLOR_SIZE_DEG).floor() as u8;
     let color = (color_index + 1).min(6);
 
-    // Смещение внутри цвета
+    // Offset within color
     let within_color = within_line - (color_index as f64) * COLOR_SIZE_DEG;
 
-    // Тон (1..6) — каждый тон = color_size / 6
+    // Tone (1..6) — each tone = color_size / 6
     let tone_size = COLOR_SIZE_DEG / 6.0;
     let tone_index = (within_color / tone_size).floor() as u8;
     let tone = (tone_index + 1).min(6);
 
-    // База (1..5) — каждая база = tone_size / 5
+    // Base (1..5) — each base = tone_size / 5
     let within_tone = within_color - (tone_index as f64) * tone_size;
     let base_size = tone_size / 5.0;
     let base_index = (within_tone / base_size).floor() as u8;
@@ -96,13 +96,13 @@ pub fn degree_to_gate(ecliptic_deg: f64) -> GatePosition {
     }
 }
 
-/// Названия знаков зодиака
+/// Zodiac sign names
 pub const ZODIAC_SIGNS: [&str; 12] = [
     "Овен", "Телец", "Близнецы", "Рак", "Лев", "Дева",
     "Весы", "Скорпион", "Стрелец", "Козерог", "Водолей", "Рыбы",
 ];
 
-/// Получить знак зодиака и градус внутри знака
+/// Get zodiac sign and degree within sign
 pub fn degree_to_zodiac(deg: f64) -> (String, f64) {
     let mut d = deg % 360.0;
     if d < 0.0 {

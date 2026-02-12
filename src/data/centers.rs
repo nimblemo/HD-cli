@@ -1,4 +1,4 @@
-/// 9 центров Human Design
+/// 9 Human Design Centers
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Center {
     Head,
@@ -13,23 +13,9 @@ pub enum Center {
 }
 
 impl Center {
-    pub fn name_ru(&self) -> &'static str {
-        match self {
-            Center::Head => "Теменной",
-            Center::Ajna => "Аджна",
-            Center::Throat => "Горловой",
-            Center::G => "Джи",
-            Center::Heart => "Сердечный",
-            Center::Sacral => "Сакральный",
-            Center::SolarPlexus => "Солнечное сплетение",
-            Center::Spleen => "Селезёночный",
-            Center::Root => "Корневой",
-        }
-    }
-
-    /// Все центры
-    pub fn all() -> Vec<Center> {
-        vec![
+    /// Get list of all centers
+    pub fn all() -> &'static [Center] {
+        &[
             Center::Head,
             Center::Ajna,
             Center::Throat,
@@ -42,28 +28,28 @@ impl Center {
         ]
     }
 
-    /// Ключ центра для поиска в БД
-    pub fn db_key(&self) -> &'static str {
+    /// Center key for DB lookup (latin keys)
+    pub fn key(&self) -> &'static str {
         match self {
-            Center::Head => "Теменной Центр",
-            Center::Ajna => "Аджна, Центр Ума", // Was "Центр Аджна"
-            Center::Throat => "Горловой центр", // Was "Горловой Центр" (case)
-            Center::G => "Центр G", // Was "Джи Центр"
-            Center::Heart => "Центр Эго", // Was "Сердечный Центр"
-            Center::Sacral => "Сакральный Центр",
-            Center::SolarPlexus => "Эмоциональный центр", // Was "Центр Солнечного Сплетения"
-            Center::Spleen => "Центр Селезенки", // Was "Селезёночный Центр"
-            Center::Root => "Корневой Центр",
+            Center::Head => "head",
+            Center::Ajna => "ajna",
+            Center::Throat => "throat",
+            Center::G => "g",
+            Center::Heart => "heart",
+            Center::Sacral => "sacral",
+            Center::SolarPlexus => "solar_plexus",
+            Center::Spleen => "splenic",
+            Center::Root => "root",
         }
     }
 
-    /// Является ли центр моторным
+    /// Is the center a motor
     pub fn is_motor(&self) -> bool {
         matches!(self, Center::Sacral | Center::Heart | Center::SolarPlexus | Center::Root)
     }
 }
 
-/// Ворота, принадлежащие каждому центру
+/// Gates belonging to each center
 #[allow(dead_code)]
 pub fn gates_for_center(center: &Center) -> Vec<u8> {
     match center {

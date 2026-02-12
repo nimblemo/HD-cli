@@ -1,8 +1,8 @@
-/// Астрономический движок: расчёт позиций планет через astro-rust
+/// Astronomical engine: planet position calculation via astro-rust
 
 use astro::*;
 
-/// Конвертация u8 месяца в time::Month
+/// Convert u8 month to time::Month
 fn month_from_u8(m: u8) -> time::Month {
     match m {
         1 => time::Month::Jan,
@@ -21,7 +21,7 @@ fn month_from_u8(m: u8) -> time::Month {
     }
 }
 
-/// Названия планет HD
+/// HD Planet names
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum HdPlanet {
     Sun,
@@ -58,7 +58,7 @@ impl HdPlanet {
         }
     }
 
-    /// Все планеты в порядке HD
+    /// All planets in HD order
     #[allow(dead_code)]
     pub fn all() -> Vec<HdPlanet> {
         vec![
@@ -79,9 +79,9 @@ impl HdPlanet {
     }
 }
 
-/// Расчёт Julian Day из даты, времени и UTC-смещения
+/// Calculate Julian Day from date, time and UTC offset
 pub fn calc_julian_day(year: i32, month: u8, day: u8, hour: u8, min: u8, utc_offset: f64) -> f64 {
-    // Переводим в UTC
+    // Convert to UTC
     let total_hours = hour as f64 + min as f64 / 60.0 - utc_offset;
 
     let day_of_month = time::DayOfMonth {
@@ -92,13 +92,13 @@ pub fn calc_julian_day(year: i32, month: u8, day: u8, hour: u8, min: u8, utc_off
         time_zone: 0.0,
     };
 
-    // Корректировка дня при переходе через полночь
+    // Day adjustment when crossing midnight
     let mut adj_year = year;
     let mut adj_month = month;
 
 
     if total_hours < 0.0 {
-        // Предыдущий день
+        // Previous day
         let (y, m, d) = prev_day(year, month, day);
         adj_year = y;
         adj_month = m;
@@ -193,37 +193,37 @@ fn days_in_month(year: i32, month: u8) -> u8 {
     }
 }
 
-/// Результат расчёта позиции планеты
+/// Planet position calculation result
 #[derive(Debug, Clone)]
 pub struct PlanetCalcResult {
     pub planet: HdPlanet,
-    pub ecliptic_lng: f64, // в градусах
+    pub ecliptic_lng: f64, // in degrees
 }
 
-/// Расчёт позиций всех планет для заданного Julian Day
+/// Calculate positions of all planets for given Julian Day
 pub fn calc_planet_positions(jd: f64) -> Vec<PlanetCalcResult> {
     let mut results = Vec::new();
 
-    // Земля (гелиоцентрическая, нужна для пересчёта)
+    // Earth (heliocentric, needed for recalculation)
     let (earth_l, earth_b, earth_r) = planet::heliocent_coords(&planet::Planet::Earth, jd);
 
-    // Солнце (геоцентрическое)
+    // Sun (geocentric)
     let (sun_ecl, _rad_vec) = sun::geocent_ecl_pos(jd);
     let sun_lng = sun_ecl.long.to_degrees();
     let sun_lng = normalize_deg(sun_lng);
 
     results.push(PlanetCalcResult { planet: HdPlanet::Sun, ecliptic_lng: sun_lng });
 
-    // Земля = Солнце + 180°
+    // Earth = Sun + 180°
     let earth_lng = normalize_deg(sun_lng + 180.0);
     results.push(PlanetCalcResult { planet: HdPlanet::Earth, ecliptic_lng: earth_lng });
 
-    // Луна (геоцентрическая)
+    // Moon (geocentric)
     let (moon_ecl, _) = lunar::geocent_ecl_pos(jd);
     let moon_lng = normalize_deg(moon_ecl.long.to_degrees());
     results.push(PlanetCalcResult { planet: HdPlanet::Moon, ecliptic_lng: moon_lng });
 
-    // Лунные узлы (средние)
+    // Lunar nodes (mean)
     let jc = time::julian_cent(jd);
     let mn_asc_node = lunar::mn_ascend_node(jc);
     let nn_lng = normalize_deg(mn_asc_node.to_degrees());
@@ -231,7 +231,7 @@ pub fn calc_planet_positions(jd: f64) -> Vec<PlanetCalcResult> {
     results.push(PlanetCalcResult { planet: HdPlanet::NorthNode, ecliptic_lng: nn_lng });
     results.push(PlanetCalcResult { planet: HdPlanet::SouthNode, ecliptic_lng: sn_lng });
 
-    // Внутренние и внешние планеты
+    // Inner and outer planets
     let planets_list = vec![
         (HdPlanet::Mercury, planet::Planet::Mercury),
         (HdPlanet::Venus, planet::Planet::Venus),
@@ -244,14 +244,14 @@ pub fn calc_planet_positions(jd: f64) -> Vec<PlanetCalcResult> {
 
     for (hd_planet, astro_planet) in &planets_list {
         let (p_l, p_b, p_r) = planet::heliocent_coords(astro_planet, jd);
-        // Геоцентрические эклиптические координаты
+        // Geocentric ecliptic coordinates
         let (ecl_lng, _ecl_lat, _dist, _lt) =
             planet::geocent_geomet_ecl_coords(earth_l, earth_b, earth_r, p_l, p_b, p_r);
         let lng = normalize_deg(ecl_lng.to_degrees());
         results.push(PlanetCalcResult { planet: *hd_planet, ecliptic_lng: lng });
     }
 
-    // Плутон
+    // Pluto
     let (pluto_l, pluto_b, pluto_r) = pluto::heliocent_pos(jd);
     let (pluto_ecl_lng, _pluto_ecl_lat, _pluto_dist, _pluto_lt) =
         planet::geocent_geomet_ecl_coords(earth_l, earth_b, earth_r, pluto_l, pluto_b, pluto_r);
@@ -269,23 +269,23 @@ fn normalize_deg(deg: f64) -> f64 {
     d
 }
 
-/// Найти Julian Day когда Солнце было на 88° раньше (Design calculation)
-/// Используем метод итеративного поиска
+/// Find Julian Day when Sun was 88° earlier (Design calculation)
+/// Using iterative search method
 pub fn find_design_jd(birth_jd: f64, birth_sun_lng: f64) -> f64 {
-    // Целевой градус Солнца = birth_sun - 88°
+    // Target Sun degree = birth_sun - 88°
     let target = normalize_deg(birth_sun_lng - 88.0);
 
-    // Примерная скорость Солнца ~0.9856°/день
-    // 88° ≈ 89.3 дня назад
+    // Approximate Sun speed ~0.9856°/day
+    // 88° ≈ 89.3 days ago
     let mut jd = birth_jd - 89.3;
 
-    // Итеративный поиск (метод Ньютона-подобный)
+    // Iterative search (Newton-like method)
     for _ in 0..50 {
         let (sun_ecl, _) = sun::geocent_ecl_pos(jd);
         let current_lng = normalize_deg(sun_ecl.long.to_degrees());
 
         let mut diff = target - current_lng;
-        // Обработка перехода через 0°/360°
+        // Handle crossing 0°/360°
         if diff > 180.0 {
             diff -= 360.0;
         }
@@ -297,7 +297,7 @@ pub fn find_design_jd(birth_jd: f64, birth_sun_lng: f64) -> f64 {
             break;
         }
 
-        // Коррекция: Солнце движется ~0.9856°/день
+        // Correction: Sun moves ~0.9856°/day
         jd += diff / 0.9856;
     }
 
