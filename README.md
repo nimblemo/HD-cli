@@ -1,0 +1,81 @@
+# Human Design CLI (hd-cli)
+
+A high-performance Rust-based command-line interface for calculating and displaying **Human Design** charts. It uses the `astro-rust` library for precise astronomical calculations and provides a beautiful, colorized terminal output.
+
+## Features
+
+- **Precise Calculations**: Accurate positions for Sun, Earth, Moon, Lunar Nodes, and all planets.
+- **Full Chart Analysis**: Calculates Type, Profile, Authority, Strategy, and Incarnation Cross.
+- **Detailed Data**: Displays detailed information about Gates, Lines, Channels, and Centers.
+- **Multiple Output Formats**: Supports interactive Table, JSON, and YAML output.
+- **Vibrant Terminal UI**: Features a unified color scheme and responsive layout.
+- **Multi-language Support**: Descriptions available in multiple languages (defaults to Russian).
+
+## Installation
+
+Ensure you have [Rust and Cargo](https://rustup.rs/) installed.
+
+```bash
+# Clone the repository
+git clone https://github.com/nimblemo/human-design-cli.git
+cd human-design-cli
+
+# Build the project
+cargo build --release
+```
+
+The binary will be available at `./target/release/hd-cli`.
+
+## Usage
+
+Calculate a chart by providing the birth date, time, and UTC offset.
+
+### Basic Command
+
+```bash
+hd-cli --date 1990-05-15 --time 14:30 --utc +3
+```
+
+### Options
+
+| Flag | Short | Description |
+| :--- | :--- | :--- |
+| `--date` | `-d` | Birth date in `YYYY-MM-DD` format. |
+| `--time` | `-t` | Birth time in `HH:MM` format. |
+| `--utc` | `-u` | Timezone offset (e.g., `+3`, `-5`, `+5.5`). |
+| `--short` | | Concise output: hides detailed descriptions. |
+| `--format` | `-f` | Output format: `table` (default), `json`, `yaml`. |
+| `--lang` | `-l` | Description language (e.g., `ru`, `en`). |
+
+### Examples
+
+**Concise Table Output:**
+```bash
+hd-cli -d 1986-05-19 -t 12:00 -u +5 --short
+```
+
+**Export to JSON:**
+```bash
+hd-cli -d 1990-05-15 -t 14:30 -u +3 --format json > chart.json
+```
+
+## Project Structure
+
+- `src/main.rs`: Entry point and CLI argument parsing.
+- `src/calc.rs`: Core Human Design logic and chart assembly.
+- `src/astro_calc.rs`: Astronomical calculations wrapper.
+- `src/cli.rs`: Terminal output formatting and UI logic.
+- `src/data/`: Data models and database loading.
+
+## Development
+
+The project automatically downloads the necessary gates database during the build process (`build.rs`).
+
+To run tests:
+```bash
+cargo test
+```
+
+## License
+
+MIT
