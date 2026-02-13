@@ -11,6 +11,7 @@ pub struct PlanetPosition {
     pub degree: f64,           // 0..360
     pub zodiac_sign: String,
     pub zodiac_symbol: String, // e.g. "♉"
+    pub planet_symbol: String, // e.g. "☉"
     pub zodiac_degree: f64,    // 0..30
     pub gate: u8,
     pub line: u8,
@@ -43,7 +44,9 @@ pub struct CenterInfo {
     pub defined: bool,
     /// Behavior (with --full)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub behavior: Option<String>,
+    pub behavior_normal: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub behavior_distorted: Option<String>,
 }
 
 /// Main chart
@@ -114,15 +117,15 @@ pub struct HdChart {
 
     /// Fear
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub fear: Option<String>,
+    pub fear: Option<Vec<InfoItem>>,
 
     /// Sexuality
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub sexuality: Option<String>,
+    pub sexuality: Option<Vec<InfoItem>>,
 
     /// Love
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub love: Option<String>,
+    pub love: Option<Vec<InfoItem>>,
 
     /// Perspective / Vision
     #[serde(skip_serializing_if = "Option::is_none")]

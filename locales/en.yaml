@@ -1,0 +1,93 @@
+planet:
+  Sun: Sun
+  Earth: Earth
+  Moon: Moon
+  NorthNode: North Node
+  SouthNode: South Node
+  Mercury: Mercury
+  Venus: Venus
+  Mars: Mars
+  Jupiter: Jupiter
+  Saturn: Saturn
+  Uranus: Uranus
+  Neptune: Neptune
+  Pluto: Pluto
+  name_header: "Planet"
+
+zodiac:
+  aries: "Aries"
+  taurus: "Taurus"
+  gemini: "Gemini"
+  cancer: "Cancer"
+  leo: "Leo"
+  virgo: "Virgo"
+  libra: "Libra"
+  scorpio: "Scorpio"
+  sagittarius: "Sagittarius"
+  capricorn: "Capricorn"
+  aquarius: "Aquarius"
+  pisces: "Pisces"
+
+error:
+  parse_date: "Error parsing date: %{error}"
+  parse_time: "Error parsing time: %{error}"
+  parse_utc: "Error parsing UTC offset: %{error}"
+  save_file: "Result saved to file: %{filename}"
+  save_error: "Error saving file: %{error}"
+
+cli:
+  header: "HUMAN DESIGN — BIRTH CHART"
+  section:
+    main_info: "MAIN INFO"
+    business: "BUSINESS"
+    channels: "CHANNELS"
+    centers: "CENTERS"
+    planets: "PLANETS"
+    personality: "PERSONALITY descriptions"
+    design: "DESIGN descriptions"
+    extra: "ADDITIONAL"
+  label:
+    date: "Date:"
+    type: "Type:"
+    profile: "Profile:"
+    authority: "Authority:"
+    strategy: "Strategy:"
+    cross: "Incarnation Cross:"
+    gate: "Gate"
+    line: "Line"
+    color: "Color"
+    tone: "Tone"
+    sign: "Sign"
+    channel: "Channel"
+    name: "Name"
+    description: "Description"
+    center: "Center"
+    status: "Description / Status"
+    defined: "Defined"
+    open: "Open"
+    motivation: "Motivation:"
+    vision: "Vision:"
+    environment: "Environment:"
+    diet: "Diet:"
+    fear: "Fear:"
+    sexuality: "Sexuality:"
+    love: "Love:"
+
+strategy:
+  generator: "Wait to Respond"
+  manifesting_generator: "Wait to Respond"
+  projector: "Wait for Invitation"
+  manifestor: "Inform"
+  reflector: "Wait a Lunar Cycle"
+  unknown: "Unknown"
+
+angle:
+  right_angle: "Right Angle"
+  left_angle: "Left Angle"
+  juxtaposition: "Juxtaposition"
+
+cross:
+  default_fmt: "%{angle} Cross (%{p_sun}/%{p_earth} | %{d_sun}/%{d_earth})"
+
+
+

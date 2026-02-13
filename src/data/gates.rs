@@ -97,9 +97,10 @@ pub fn degree_to_gate(ecliptic_deg: f64) -> GatePosition {
 }
 
 /// Zodiac sign names
+/// Zodiac sign keys
 pub const ZODIAC_SIGNS: [&str; 12] = [
-    "Овен", "Телец", "Близнецы", "Рак", "Лев", "Дева",
-    "Весы", "Скорпион", "Стрелец", "Козерог", "Водолей", "Рыбы",
+    "aries", "taurus", "gemini", "cancer", "leo", "virgo",
+    "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces",
 ];
 
 /// Get zodiac sign and degree within sign

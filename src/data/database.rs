@@ -96,22 +96,26 @@ pub struct HdDatabase {
 
 use once_cell::sync::Lazy;
 
-// Path relative to src/data/database.rs -> ../../data/gates_database.json
-const DEFAULT_DB_JSON: &str = include_str!("../../data/gates_database.json");
+// Embed all three databases
+const DB_JSON_RU: &str = include_str!("../../data/gates_database_ru.json");
+const DB_JSON_EN: &str = include_str!("../../data/gates_database_en.json");
+const DB_JSON_ES: &str = include_str!("../../data/gates_database_es.json");
 
-static DEFAULT_DB: Lazy<HdDatabase> = Lazy::new(|| {
-    serde_json::from_str(DEFAULT_DB_JSON).unwrap_or_else(|e| {
-        panic!("Failed to parse embedded gates_database.json: {}", e)
-    })
+static DB_RU: Lazy<HdDatabase> = Lazy::new(|| {
+    serde_json::from_str(DB_JSON_RU).expect("Failed to parse embedded gates_database_ru.json")
+});
+static DB_EN: Lazy<HdDatabase> = Lazy::new(|| {
+    serde_json::from_str(DB_JSON_EN).expect("Failed to parse embedded gates_database_en.json")
+});
+static DB_ES: Lazy<HdDatabase> = Lazy::new(|| {
+    serde_json::from_str(DB_JSON_ES).expect("Failed to parse embedded gates_database_es.json")
 });
 
-/// Get database (embedded or loaded by language)
+/// Get database by language code
 pub fn get_database(lang: &str) -> &'static HdDatabase {
-    if lang == "ru" {
-        &DEFAULT_DB
-    } else {
-        // For other languages return default for now
-        eprintln!("Язык '{}' не найден, используется 'ru'", lang);
-        &DEFAULT_DB
+    match lang {
+        "en" => &DB_EN,
+        "es" => &DB_ES,
+        _ => &DB_RU, // Default to RU
     }
 }

@@ -77,7 +77,7 @@ pub fn build_chart(
     // We use the Russian texts hardcoded if DB is empty, or try to find them if needed.
     // For now, retaining hardcoded Russian strategy names as per previous implementation,
     // as `strategies` map in DB might be empty.
-    let strategy = determine_strategy_rus(&type_key);
+    let strategy = determine_strategy_localized(&type_key);
     // Description: if `strategies` map has keys matching `type_key` (e.g. "generator"), use it.
     let strategy_description = if full { db.strategies.get(&type_key).cloned() } else { None };
 
@@ -126,19 +126,21 @@ pub fn build_chart(
             des_sun_gp.1.gate, des_earth_gp.1.gate
         )
     } else {
-        // Fallback name generation (Russian)
+        // Fallback name generation (Localized)
         let angle_name = match angle_key {
-            "right_angle" => "Правоугольный",
-            "juxtaposition" => "Джакста-позиции",
-            "left_angle" => "Левоугольный",
-            _ => "",
+            "right_angle" => rust_i18n::t!("angle.right_angle").to_string(),
+            "juxtaposition" => rust_i18n::t!("angle.juxtaposition").to_string(),
+            "left_angle" => rust_i18n::t!("angle.left_angle").to_string(),
+            _ => "".to_string(),
         };
-         format!(
-            "Крест {} ({}/{} | {}/{})",
-            angle_name,
-            pers_sun_gp.1.gate, pers_earth_gp.1.gate,
-            des_sun_gp.1.gate, des_earth_gp.1.gate
-        )
+        
+        rust_i18n::t!("cross.default_fmt", 
+            angle = angle_name,
+            p_sun = pers_sun_gp.1.gate,
+            p_earth = pers_earth_gp.1.gate,
+            d_sun = des_sun_gp.1.gate,
+            d_earth = des_earth_gp.1.gate
+        ).to_string()
     };
 
     // 14. Motivation (Personality Sun Color)
@@ -147,7 +149,7 @@ pub fn build_chart(
         .map(|m| {
             let desc = m.colors.get(&pers_sun_color.to_string()).cloned().unwrap_or_default();
             vec![InfoItem {
-                label: format!("Цвет {}:", pers_sun_color),
+                label: format!("{} {}:", rust_i18n::t!("cli.label.color"), pers_sun_color),
                 description: desc,
             }]
         });
@@ -158,7 +160,7 @@ pub fn build_chart(
         db.environment.as_ref().map(|e| {
             let desc = e.colors.get(&node.color.to_string()).cloned().unwrap_or_default();
             vec![InfoItem {
-                label: format!("Цвет {}:", node.color),
+                label: format!("{} {}:", rust_i18n::t!("cli.label.color"), node.color),
                 description: desc,
             }]
         })
@@ -172,18 +174,18 @@ pub fn build_chart(
     let diet = db.diet.as_ref().map(|d| {
         let c_desc = d.colors.get(&des_sun_color.to_string()).cloned().unwrap_or_default();
         let mut items = vec![InfoItem {
-            label: format!("Цвет {}:", des_sun_color),
+            label: format!("{} {}:", rust_i18n::t!("cli.label.color"), des_sun_color),
             description: c_desc,
         }];
 
         if let Some(t_desc) = d.tones.get(&des_sun_tone.to_string()) {
             items.push(InfoItem {
-                label: format!("Тон {}:", des_sun_tone),
+                label: format!("{} {}:", rust_i18n::t!("cli.label.tone"), des_sun_tone),
                 description: t_desc.clone(),
             });
         } else {
              items.push(InfoItem {
-                label: format!("Тон {}:", des_sun_tone),
+                label: format!("{} {}:", rust_i18n::t!("cli.label.tone"), des_sun_tone),
                 description: "".to_string(),
             });
         }
@@ -196,7 +198,7 @@ pub fn build_chart(
         db.vision.as_ref().map(|v| {
             let desc = v.colors.get(&node.color.to_string()).cloned().unwrap_or_default();
             vec![InfoItem {
-                label: format!("Цвет {}:", node.color),
+                label: format!("{} {}:", rust_i18n::t!("cli.label.color"), node.color),
                 description: desc,
             }]
         })
@@ -204,25 +206,51 @@ pub fn build_chart(
         None
     };
 
-    // 18. Fear (from Motivation)
-    let fear = db.fears.get(&pers_sun_color.to_string()).cloned();
+    // 18. Fear, Sexuality, Love (from all active gates)
+    let mut fears = Vec::new();
+    let mut sexualities = Vec::new();
+    let mut loves = Vec::new();
 
-    // 19. Sexuality (from Design Mars gates - remains as is)
-    let des_mars_gp = des_gates.iter().find(|(p, _)| *p == HdPlanet::Mars);
-    let sexuality = des_mars_gp.and_then(|(_, gp)| {
-        db.gates.get(&gp.gate.to_string())
-            .and_then(|g| g.sexuality.as_ref())
-            .map(|s| s.clone()) // Now it's a String
-    });
+    // Add Motivation Fear (if present)
+    if let Some(f) = db.fears.get(&pers_sun_color.to_string()) {
+        fears.push(InfoItem {
+            label: format!("{} {}:", rust_i18n::t!("cli.label.motivation"), pers_sun_color),
+            description: f.clone(),
+        });
+    }
 
-    // 20. Love (from Personality Venus)
-    let pers_venus_gp = pers_gates.iter().find(|(p, _)| *p == HdPlanet::Venus);
-    let love = pers_venus_gp.and_then(|(_, gp)| {
-        let key = format!("{} линия", gp.line);
-        db.gates.get(&gp.gate.to_string())
-            .and_then(|g| g.lines.get(&key))
-            .cloned()
-    });
+    // Sort active gates to ensure consistent order
+    // (all_active_gates is already sorted)
+    for gate_id in &all_active_gates {
+        if let Some(gate_data) = db.gates.get(&gate_id.to_string()) {
+            // Label: "Gate X (Name):"
+            let gate_name = &gate_data.name;
+            let gate_label = format!("{} {} ({}):", rust_i18n::t!("cli.label.gate"), gate_id, gate_name);
+            
+            if let Some(f) = &gate_data.fear {
+                fears.push(InfoItem {
+                    label: gate_label.clone(),
+                    description: f.clone(),
+                });
+            }
+            if let Some(s) = &gate_data.sexuality {
+                sexualities.push(InfoItem {
+                    label: gate_label.clone(),
+                    description: s.clone(),
+                });
+            }
+            if let Some(l) = &gate_data.love {
+                loves.push(InfoItem {
+                    label: gate_label.clone(),
+                    description: l.clone(),
+                });
+            }
+        }
+    }
+
+    let fear = if fears.is_empty() { None } else { Some(fears) };
+    let sexuality = if sexualities.is_empty() { None } else { Some(sexualities) };
+    let love = if loves.is_empty() { None } else { Some(loves) };
 
     // Form PlanetPosition
     let personality = build_planet_positions(&pers_gates, db, full);
@@ -256,22 +284,21 @@ pub fn build_chart(
         
         let name = center_data_opt.map(|d| d.name.clone()).unwrap_or_else(|| center_key.to_string());
         
-        let behavior = if full {
-            center_data_opt.map(|cb| {
-                if defined {
-                    cb.normal.clone()
-                } else {
-                    cb.distorted.clone()
-                }
-            })
+        let (behavior_normal, behavior_distorted) = if full {
+            if let Some(cb) = center_data_opt {
+                (Some(cb.normal.clone()), Some(cb.distorted.clone()))
+            } else {
+                (None, None)
+            }
         } else {
-            None
+            (None, None)
         };
         
         CenterInfo {
             name,
             defined,
-            behavior,
+            behavior_normal,
+            behavior_distorted,
         }
     }).collect();
 
@@ -329,8 +356,11 @@ fn build_planet_positions(
     full: bool,
 ) -> Vec<PlanetPosition> {
     positions.iter().enumerate().map(|(idx, (planet, gp))| {
-        let (zodiac_sign, zodiac_degree) = gates::degree_to_zodiac(gp.degree);
-        let zodiac_symbol = zodiac_symbol_from_name(&zodiac_sign);
+        let (zodiac_key, zodiac_degree) = gates::degree_to_zodiac(gp.degree);
+        let zodiac_symbol = zodiac_symbol_from_key(&zodiac_key);
+        // Localize
+        let zodiac_key_str = format!("zodiac.{}", zodiac_key);
+        let zodiac_sign = rust_i18n::t!(&zodiac_key_str).to_string();
         
         let gate_name = db.gates.get(&gp.gate.to_string()).map(|g| g.name.clone());
         
@@ -346,12 +376,13 @@ fn build_planet_positions(
         };
 
         PlanetPosition {
-            planet: planet.name_ru().to_string(),
+            planet: planet.name(),
             index: idx,
             longitude: gp.degree,
             degree: (gp.degree * 100.0).round() / 100.0,
             zodiac_sign,
             zodiac_symbol,
+            planet_symbol: planet.symbol(),
             zodiac_degree: (zodiac_degree * 100.0).round() / 100.0,
             gate: gp.gate,
             line: gp.line,
@@ -365,23 +396,26 @@ fn build_planet_positions(
     }).collect()
 }
 
-fn zodiac_symbol_from_name(name: &str) -> String {
-    match name {
-        "Овен" => "♈",
-        "Телец" => "♉",
-        "Близнецы" => "♊",
-        "Рак" => "♋",
-        "Лев" => "♌",
-        "Дева" => "♍",
-        "Весы" => "♎",
-        "Скорпион" => "♏",
-        "Стрелец" => "♐",
-        "Козерог" => "♑",
-        "Водолей" => "♒",
-        "Рыбы" => "♓",
+fn zodiac_symbol_from_key(key: &str) -> String {
+    // Using \u{FE0E} to force text presentation (no emoji color/frame)
+    match key {
+        "aries" => "♈\u{FE0E}",
+        "taurus" => "♉\u{FE0E}",
+        "gemini" => "♊\u{FE0E}",
+        "cancer" => "♋\u{FE0E}",
+        "leo" => "♌\u{FE0E}",
+        "virgo" => "♍\u{FE0E}",
+        "libra" => "♎\u{FE0E}",
+        "scorpio" => "♏\u{FE0E}",
+        "sagittarius" => "♐\u{FE0E}",
+        "capricorn" => "♑\u{FE0E}",
+        "aquarius" => "♒\u{FE0E}",
+        "pisces" => "♓\u{FE0E}",
         _ => "",
     }.to_string()
 }
+
+
 
 fn find_defined_centers(channels: &[ChannelDef]) -> HashSet<Center> {
     let mut defined = HashSet::new();
@@ -465,13 +499,15 @@ fn determine_authority(defined: &HashSet<Center>) -> String {
     }
 }
 
-fn determine_strategy_rus(hd_type_key: &str) -> String {
+fn determine_strategy_localized(hd_type_key: &str) -> String {
+    // actually we have specific keys in YAML
     match hd_type_key {
-        "generator" | "manifesting_generator" => "Ждать отклика".to_string(),
-        "projector" => "Ждать приглашения".to_string(),
-        "manifestor" => "Информировать".to_string(),
-        "reflector" => "Ждать лунный цикл (29 дней)".to_string(),
-        _ => "Неизвестно".to_string(),
+        "generator" => rust_i18n::t!("strategy.generator").to_string(),
+        "manifesting_generator" => rust_i18n::t!("strategy.manifesting_generator").to_string(),
+        "projector" => rust_i18n::t!("strategy.projector").to_string(),
+        "manifestor" => rust_i18n::t!("strategy.manifestor").to_string(),
+        "reflector" => rust_i18n::t!("strategy.reflector").to_string(),
+        _ => rust_i18n::t!("strategy.unknown").to_string(),
     }
 }
 

@@ -40,21 +40,39 @@ pub enum HdPlanet {
 }
 
 impl HdPlanet {
-    pub fn name_ru(&self) -> &'static str {
+    pub fn symbol(&self) -> String {
         match self {
-            HdPlanet::Sun => "Солнце",
-            HdPlanet::Earth => "Земля",
-            HdPlanet::Moon => "Луна",
-            HdPlanet::NorthNode => "Северный Узел",
-            HdPlanet::SouthNode => "Южный Узел",
-            HdPlanet::Mercury => "Меркурий",
-            HdPlanet::Venus => "Венера",
-            HdPlanet::Mars => "Марс",
-            HdPlanet::Jupiter => "Юпитер",
-            HdPlanet::Saturn => "Сатурн",
-            HdPlanet::Uranus => "Уран",
-            HdPlanet::Neptune => "Нептун",
-            HdPlanet::Pluto => "Плутон",
+            HdPlanet::Sun => "☉",
+            HdPlanet::Earth => "⊕",
+            HdPlanet::Moon => "☾",
+            HdPlanet::NorthNode => "☊",
+            HdPlanet::SouthNode => "☋",
+            HdPlanet::Mercury => "☿",
+            HdPlanet::Venus => "♀",
+            HdPlanet::Mars => "♂",
+            HdPlanet::Jupiter => "♃",
+            HdPlanet::Saturn => "♄",
+            HdPlanet::Uranus => "♅",
+            HdPlanet::Neptune => "♆",
+            HdPlanet::Pluto => "♇",
+        }.to_string()
+    }
+
+    pub fn name(&self) -> String {
+        match self {
+            HdPlanet::Sun => rust_i18n::t!("planet.Sun").to_string(),
+            HdPlanet::Earth => rust_i18n::t!("planet.Earth").to_string(),
+            HdPlanet::Moon => rust_i18n::t!("planet.Moon").to_string(),
+            HdPlanet::NorthNode => rust_i18n::t!("planet.NorthNode").to_string(),
+            HdPlanet::SouthNode => rust_i18n::t!("planet.SouthNode").to_string(),
+            HdPlanet::Mercury => rust_i18n::t!("planet.Mercury").to_string(),
+            HdPlanet::Venus => rust_i18n::t!("planet.Venus").to_string(),
+            HdPlanet::Mars => rust_i18n::t!("planet.Mars").to_string(),
+            HdPlanet::Jupiter => rust_i18n::t!("planet.Jupiter").to_string(),
+            HdPlanet::Saturn => rust_i18n::t!("planet.Saturn").to_string(),
+            HdPlanet::Uranus => rust_i18n::t!("planet.Uranus").to_string(),
+            HdPlanet::Neptune => rust_i18n::t!("planet.Neptune").to_string(),
+            HdPlanet::Pluto => rust_i18n::t!("planet.Pluto").to_string(),
         }
     }
 

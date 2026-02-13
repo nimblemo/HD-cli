@@ -1,0 +1,93 @@
+planet:
+  Sun: Sol
+  Earth: Tierra
+  Moon: Luna
+  NorthNode: Nodo Norte
+  SouthNode: Nodo Sur
+  Mercury: Mercurio
+  Venus: Venus
+  Mars: Marte
+  Jupiter: Júpiter
+  Saturn: Saturno
+  Uranus: Urano
+  Neptune: Neptuno
+  Pluto: Plutón
+  name_header: "Planeta"
+
+zodiac:
+  aries: "Aries"
+  taurus: "Tauro"
+  gemini: "Géminis"
+  cancer: "Cáncer"
+  leo: "Leo"
+  virgo: "Virgo"
+  libra: "Libra"
+  scorpio: "Escorpio"
+  sagittarius: "Sagitario"
+  capricorn: "Capricornio"
+  aquarius: "Acuario"
+  pisces: "Piscis"
+
+error:
+  parse_date: "Error al analizar la fecha: %{error}"
+  parse_time: "Error al analizar la hora: %{error}"
+  parse_utc: "Error al analizar el desplazamiento UTC: %{error}"
+  save_file: "Resultado guardado en archivo: %{filename}"
+  save_error: "Error al guardar el archivo: %{error}"
+
+cli:
+  header: "DISEÑO HUMANO — CARTA NATAL"
+  section:
+    main_info: "INFORMACIÓN PRINCIPAL"
+    business: "NEGOCIOS"
+    channels: "CANALES"
+    centers: "CENTROS"
+    planets: "PLANETAS"
+    personality: "PERSONALIDAD"
+    design: "DISEÑO"
+    extra: "ADICIONAL"
+  label:
+    date: "Fecha:"
+    type: "Tipo:"
+    profile: "Perfil:"
+    authority: "Autoridad:"
+    strategy: "Estrategia:"
+    cross: "Cruz de Encarnación:"
+    gate: "Puerta"
+    line: "Línea"
+    color: "Color"
+    tone: "Tono"
+    sign: "Signo"
+    channel: "Canal"
+    name: "Nombre"
+    description: "Descripción"
+    center: "Centro"
+    status: "Descripción / Estado"
+    defined: "Definido"
+    open: "Abierto"
+    motivation: "Motivación:"
+    vision: "Visión:"
+    environment: "Entorno:"
+    diet: "Dieta:"
+    fear: "Miedo:"
+    sexuality: "Sexualidad:"
+    love: "Amor:"
+
+strategy:
+  generator: "Esperar para Responder"
+  manifesting_generator: "Esperar para Responder"
+  projector: "Esperar la Invitación"
+  manifestor: "Informar"
+  reflector: "Esperar un Ciclo Lunar"
+  unknown: "Desconocido"
+
+angle:
+  right_angle: "Ángulo Derecho"
+  left_angle: "Ángulo Izquierdo"
+  juxtaposition: "Yuxtaposición"
+
+cross:
+  default_fmt: "Cruz del %{angle} (%{p_sun}/%{p_earth} | %{d_sun}/%{d_earth})"
+
+
+

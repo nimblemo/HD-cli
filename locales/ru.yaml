@@ -1,0 +1,96 @@
+planet:
+  Sun: Солнце
+  Earth: Земля
+  Moon: Луна
+  NorthNode: Северный Узел
+  SouthNode: Южный Узел
+  Mercury: Меркурий
+  Venus: Венера
+  Mars: Марс
+  Jupiter: Юпитер
+  Saturn: Сатурн
+  Uranus: Уран
+  Neptune: Нептун
+  Pluto: Плутон
+  name_header: "Планета"
+
+zodiac:
+  aries: "Овен"
+  taurus: "Телец"
+  gemini: "Близнецы"
+  cancer: "Рак"
+  leo: "Лев"
+  virgo: "Дева"
+  libra: "Весы"
+  scorpio: "Скорпион"
+  sagittarius: "Стрелец"
+  capricorn: "Козерог"
+  aquarius: "Водолей"
+  pisces: "Рыбы"
+
+error:
+  parse_date: "Ошибка при разборе даты: %{error}"
+  parse_time: "Ошибка при разборе времени: %{error}"
+  parse_utc: "Ошибка при разборе смещения UTC: %{error}"
+  save_file: "Результат сохранён в файл: %{filename}"
+  save_error: "Ошибка при сохранении файла: %{error}"
+
+cli:
+  header: "HUMAN DESIGN — КАРТА РОЖДЕНИЯ"
+  section:
+    main_info: "ОСНОВНЫЕ ДАННЫЕ"
+    business: "БИЗНЕС"
+    channels: "КАНАЛЫ"
+    centers: "ЦЕНТРЫ"
+    planets: "ПЛАНЕТЫ"
+    personality: "ОПИСАНИЯ ЛИЧНОСТИ (Personality)"
+    design: "ОПИСАНИЯ ДИЗАЙНА (Design)"
+    extra: "ДОПОЛНИТЕЛЬНО"
+    fear: "СТРАХИ"
+    sexuality: "СЕКСУАЛЬНОСТЬ"
+    love: "ЛЮБОВЬ"
+  label:
+    date: "Дата:"
+    type: "Тип:"
+    profile: "Профиль:"
+    authority: "Авторитет:"
+    strategy: "Стратегия:"
+    cross: "Инкарнационный крест:"
+    gate: "Ворота"
+    line: "Линия"
+    color: "Цвет"
+    tone: "Тон"
+    sign: "Знак"
+    channel: "Канал"
+    name: "Название"
+    description: "Описание"
+    center: "Центр"
+    status: "Описание / Статус"
+    defined: "Определён"
+    open: "Открыт"
+    motivation: "Мотивация:"
+    vision: "Видение:"
+    environment: "Среда:"
+    diet: "Диета:"
+    fear: "Страх:"
+    sexuality: "Сексуальность:"
+    love: "Любовь:"
+
+strategy:
+  generator: "Ждать отклика"
+  manifesting_generator: "Ждать отклика"
+  projector: "Ждать приглашения"
+  manifestor: "Информировать"
+  reflector: "Ждать лунный цикл (29 дней)"
+  unknown: "Неизвестно"
+
+angle:
+  right_angle: "Правоугольный"
+  left_angle: "Левоугольный"
+  juxtaposition: "Джакста-позиции"
+
+cross:
+  default_fmt: "Крест %{angle} (%{p_sun}/%{p_earth} | %{d_sun}/%{d_earth})"
+
+
+
