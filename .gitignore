@@ -1,2 +1,5 @@
-/target
 /data/*
+/target/*
+!/target/release/
+/target/release/*
+!/target/release/hd-cli.exe
