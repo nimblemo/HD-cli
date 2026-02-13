@@ -6,14 +6,20 @@ A high-performance Rust-based command-line interface for calculating and display
 
 - **Precise Calculations**: Accurate positions for Sun, Earth, Moon, Lunar Nodes, and all planets.
 - **Full Chart Analysis**: Calculates Type, Profile, Authority, Strategy, and Incarnation Cross.
-- **Detailed Data**: Displays detailed information about Gates, Lines, Channels, and Centers.
+- **Detailed Data**: Displays detailed information about Gates (including Sexuality, Fear, Love), Lines, Channels, and Centers.
 - **Multiple Output Formats**: Supports interactive Table, JSON, and YAML output.
 - **Vibrant Terminal UI**: Features a unified color scheme and responsive layout.
-- **Multi-language Support**: Descriptions available in multiple languages (defaults to Russian).
+- **Font Awesome Support**: Uses Nerd Fonts for rich zodiac and planet symbols.
+- **Multi-language Support**: Descriptions available in English (en), Russian (ru), and Spanish (es). Default is Russian.
 
 ## Installation
 
-Ensure you have [Rust and Cargo](https://rustup.rs/) installed.
+### Prerequisites
+
+1.  **Rust and Cargo**: Ensure you have [Rust](https://rustup.rs/) installed.
+2.  **Nerd Font**: For the best experience with icons, install a [Nerd Font](https://www.nerdfonts.com/) (e.g., *JetBrainsMono Nerd Font*, *FiraCode Nerd Font*) and set it as your terminal font.
+
+### Build from Source
 
 ```bash
 # Clone the repository
@@ -45,7 +51,8 @@ hd-cli --date 1990-05-15 --time 14:30 --utc +3
 | `--utc` | `-u` | Timezone offset (e.g., `+3`, `-5`, `+5.5`). |
 | `--short` | | Concise output: hides detailed descriptions. |
 | `--format` | `-f` | Output format: `table` (default), `json`, `yaml`. |
-| `--lang` | `-l` | Description language (e.g., `ru`, `en`). |
+| `--lang` | `-l` | Language: `ru` (default), `en`, `es`. |
+| `--save` | | Save output to file (default filename or custom). |
 
 ### Examples
 
@@ -57,6 +64,16 @@ hd-cli -d 1986-05-19 -t 12:00 -u +5 --short
 **Export to JSON:**
 ```bash
 hd-cli -d 1990-05-15 -t 14:30 -u +3 --format json > chart.json
+```
+
+**Save to File:**
+```bash
+hd-cli -d 1990-05-15 -t 14:30 -u +3 --save my_chart.txt
+```
+
+**English Output:**
+```bash
+hd-cli -d 1990-05-15 -t 14:30 -u +3 --lang en
 ```
 
 ## Project Structure
