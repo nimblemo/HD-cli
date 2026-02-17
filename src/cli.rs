@@ -335,28 +335,7 @@ fn build_table_string(chart: &HdChart, plain: bool) -> String {
 
     // Business
     if let Some(ref biz) = chart.business {
-        writeln!(
-            out,
-            "\n{}",
-            rust_i18n::t!("cli.section.business")
-                .truecolor(95, 158, 160)
-                .bold()
-        )
-        .unwrap();
-        writeln!(out).unwrap(); // Spacing
-
-        for b in biz {
-            writeln!(
-                out,
-                "  {} {}:",
-                format!("{} {}:", rust_i18n::t!("cli.label.gate"), b.gate).truecolor(255, 160, 122), // Coral
-                b.title.truecolor(255, 215, 0) // Gold
-            )
-            .unwrap();
-            if let Some(ref desc) = b.description {
-                write_wrapped(&mut out, desc, 4, Some(desc_color), false);
-            }
-        }
+        write_gate_section_items(&mut out, &rust_i18n::t!("cli.section.business"), biz);
     }
 
     // 4. CHANNELS (Moved here, after Business)
@@ -546,53 +525,17 @@ fn build_table_string(chart: &HdChart, plain: bool) -> String {
 
     // Fear Section
     if let Some(ref items) = chart.fear {
-        writeln!(
-            out,
-            "\n{}",
-            rust_i18n::t!("cli.section.fear")
-                .truecolor(95, 158, 160)
-                .bold()
-        )
-        .unwrap();
-        writeln!(out).unwrap();
-        for item in items {
-            writeln!(out, "  {}", item.label.truecolor(255, 160, 122)).unwrap();
-            write_wrapped(&mut out, &item.description, 4, Some(desc_color), false);
-        }
+        write_gate_section_items(&mut out, &rust_i18n::t!("cli.section.fear"), items);
     }
 
     // Sexuality Section
     if let Some(ref items) = chart.sexuality {
-        writeln!(
-            out,
-            "\n{}",
-            rust_i18n::t!("cli.section.sexuality")
-                .truecolor(95, 158, 160)
-                .bold()
-        )
-        .unwrap();
-        writeln!(out).unwrap();
-        for item in items {
-            writeln!(out, "  {}", item.label.truecolor(255, 160, 122)).unwrap();
-            write_wrapped(&mut out, &item.description, 4, Some(desc_color), false);
-        }
+        write_gate_section_items(&mut out, &rust_i18n::t!("cli.section.sexuality"), items);
     }
 
     // Love Section
     if let Some(ref items) = chart.love {
-        writeln!(
-            out,
-            "\n{}",
-            rust_i18n::t!("cli.section.love")
-                .truecolor(95, 158, 160)
-                .bold()
-        )
-        .unwrap();
-        writeln!(out).unwrap();
-        for item in items {
-            writeln!(out, "  {}", item.label.truecolor(255, 160, 122)).unwrap();
-            write_wrapped(&mut out, &item.description, 4, Some(desc_color), false);
-        }
+        write_gate_section_items(&mut out, &rust_i18n::t!("cli.section.love"), items);
     }
 
     if has_extra && is_full_mode {
@@ -838,6 +781,64 @@ fn write_descriptions(
             )
             .unwrap();
             write_wrapped(out, l_desc, 6, Some(desc_color), false);
+        }
+    }
+}
+
+fn write_gate_section_items(out: &mut String, title: &str, items: &[crate::models::InfoItem]) {
+    writeln!(out, "\n{}", title.truecolor(95, 158, 160).bold()).unwrap();
+    writeln!(out).unwrap(); // Spacing
+
+    let desc_color = colored::Color::TrueColor {
+        r: 230,
+        g: 228,
+        b: 208,
+    }; // Beige
+    let label_color = colored::Color::TrueColor {
+        r: 255,
+        g: 160,
+        b: 122,
+    }; // Soft Coral
+    let value_color = colored::Color::TrueColor {
+        r: 255,
+        g: 215,
+        b: 0,
+    }; // Gold
+
+    for item in items {
+        if let (Some(planets), Some(gate_id), Some(gate_name)) =
+            (&item.planets, item.gate_id, &item.gate_name)
+        {
+            // New Format: Planet - Gate
+            // "☉ Sun, ⊕ Earth - Gate 5: Name"
+            let mut planets_vec: Vec<_> = planets.iter().collect();
+            planets_vec.sort();
+
+            let planets_str = planets_vec
+                .iter()
+                .map(|p| format!("{} {}", p.symbol, p.name))
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            let gate_part = format!(
+                "{} {}: {}",
+                rust_i18n::t!("cli.label.gate"),
+                gate_id,
+                gate_name
+            );
+
+            writeln!(
+                out,
+                "  {} - {}",
+                planets_str.color(label_color).bold(),
+                gate_part.color(value_color).bold()
+            )
+            .unwrap();
+            write_wrapped(out, &item.description, 4, Some(desc_color), false);
+        } else {
+            // Fallback / Standard InfoItem
+            writeln!(out, "  {}", item.label.truecolor(255, 160, 122)).unwrap();
+            write_wrapped(out, &item.description, 4, Some(desc_color), false);
         }
     }
 }

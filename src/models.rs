@@ -1,5 +1,4 @@
 /// Output models for serialization
-
 use serde::Serialize;
 
 /// Planet position in chart
@@ -8,7 +7,7 @@ pub struct PlanetPosition {
     pub planet: String,
     pub index: usize,
     pub longitude: f64,
-    pub degree: f64,           // 0..360
+    pub degree: f64, // 0..360
     pub zodiac_sign: String,
     pub zodiac_symbol: String, // e.g. "♉"
     pub planet_symbol: String, // e.g. "☉"
@@ -101,7 +100,7 @@ pub struct HdChart {
 
     /// Business (with --full)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub business: Option<Vec<BusinessInfo>>,
+    pub business: Option<Vec<InfoItem>>,
 
     /// Motivation
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -132,18 +131,29 @@ pub struct HdChart {
     pub vision: Option<Vec<InfoItem>>,
 }
 
-/// Additional info item (Label + Description)
+/// Short planet info for lists
+/// Short planet info for lists
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct PlanetShortInfo {
+    pub name: String,
+    pub symbol: String,
+}
+
+/// Additional info item (Label + Description + Optional Gate Context)
 #[derive(Debug, Clone, Serialize)]
 pub struct InfoItem {
     pub label: String,
     pub description: String,
-}
 
-/// Business info from gates
-#[derive(Debug, Clone, Serialize)]
-pub struct BusinessInfo {
-    pub gate: u8,
-    pub title: String,
+    /// Optional: Planets activating this item (for Fear/Love/etc)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
+    pub planets: Option<std::collections::HashSet<PlanetShortInfo>>,
+
+    /// Optional: Gate ID if related to a specific gate
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gate_id: Option<u8>,
+
+    /// Optional: Gate Name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gate_name: Option<String>,
 }
