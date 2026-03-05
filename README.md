@@ -39,7 +39,7 @@ Calculate a chart by providing the birth date, time, and UTC offset.
 ### Basic Command
 
 ```bash
-hd-cli --date 1990-05-15 --time 14:30 --utc +3
+hd-cli --date 1986-05-19 --time 12:00 --utc +6
 ```
 
 ### Options
