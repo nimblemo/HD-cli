@@ -46,6 +46,7 @@ cli:
     personality: "PERSONALITY descriptions"
     design: "DESIGN descriptions"
     extra: "ADDITIONAL"
+    circuits: "CIRCUITS"
   label:
     date: "Date:"
     type: "Type:"
@@ -72,6 +73,10 @@ cli:
     fear: "Fear:"
     sexuality: "Sexuality:"
     love: "Love:"
+    circuit: "Circuit"
+    score: "Score"
+    planets: "Planets"
+    channels: "Channels"
 
 strategy:
   generator: "Wait to Respond"
@@ -88,6 +93,3 @@ angle:
 
 cross:
   default_fmt: "%{angle} Cross (%{p_sun}/%{p_earth} | %{d_sun}/%{d_earth})"
-
-
-

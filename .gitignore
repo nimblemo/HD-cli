@@ -3,3 +3,4 @@
 !/target/release/
 /target/release/*
 !/target/release/hd-cli.exe
+litho.docs

@@ -563,6 +563,12 @@ fn build_table_string(chart: &HdChart, plain: bool) -> String {
         }
     }
 
+    if let Some(ref scores) = chart.circuit_scores {
+        if !scores.is_empty() {
+            write_circuit_scores_table(&mut out, scores, plain);
+        }
+    }
+
     out
 }
 
@@ -874,4 +880,132 @@ fn write_wrapped(
     }
 
     writeln!(out, "{}", style).unwrap();
+}
+
+fn write_circuit_scores_table(
+    out: &mut String,
+    scores: &[crate::models::CircuitScoreItem],
+    plain: bool,
+) {
+    use crate::circuit_score::group_by_circuit;
+
+    writeln!(
+        out,
+        "\n{}",
+        rust_i18n::t!("cli.section.circuits")
+            .truecolor(95, 158, 160)
+            .bold()
+    )
+    .unwrap();
+    writeln!(out).unwrap();
+
+    let add_style = |cell: Cell, color: TableColor, bold: bool| -> Cell {
+        if plain {
+            cell
+        } else {
+            let mut c = cell.fg(color);
+            if bold {
+                c = c.add_attribute(Attribute::Bold);
+            }
+            c
+        }
+    };
+
+    let tc_coral = TableColor::Rgb {
+        r: 255,
+        g: 160,
+        b: 122,
+    };
+    let tc_gold = TableColor::Rgb {
+        r: 255,
+        g: 215,
+        b: 0,
+    };
+    let tc_teal = TableColor::Rgb {
+        r: 95,
+        g: 158,
+        b: 160,
+    };
+    let tc_beige = TableColor::Rgb {
+        r: 230,
+        g: 228,
+        b: 208,
+    };
+    let tc_grey = TableColor::DarkGrey;
+
+    let mut table = Table::new();
+    table
+        .load_preset(presets::UTF8_FULL)
+        .set_content_arrangement(ContentArrangement::Dynamic)
+        .set_header(vec![
+            add_style(
+                Cell::new(rust_i18n::t!("cli.label.circuit").as_ref()),
+                tc_coral,
+                true,
+            ),
+            add_style(
+                Cell::new(rust_i18n::t!("cli.label.score").as_ref()),
+                tc_coral,
+                true,
+            ),
+            add_style(
+                Cell::new(rust_i18n::t!("cli.label.planets").as_ref()),
+                tc_coral,
+                true,
+            ),
+            add_style(
+                Cell::new(rust_i18n::t!("cli.label.channels").as_ref()),
+                tc_coral,
+                true,
+            ),
+            add_style(
+                Cell::new(rust_i18n::t!("cli.label.description").as_ref()),
+                tc_coral,
+                true,
+            ),
+        ]);
+
+    let grouped = group_by_circuit(scores);
+
+    for (_, circuit_name, circuit_desc, circuit_total, sub_items) in &grouped {
+        let desc = if circuit_desc.is_empty() {
+            "—".to_string()
+        } else {
+            circuit_desc.clone()
+        };
+        table.add_row(vec![
+            add_style(Cell::new(format!("▶ {}", circuit_name)), tc_gold, true),
+            add_style(Cell::new(format!("{:.1}", circuit_total)), tc_gold, true),
+            add_style(Cell::new(""), tc_grey, false),
+            add_style(Cell::new(""), tc_grey, false),
+            add_style(Cell::new(&desc), tc_beige, false),
+        ]);
+
+        // ── Sub-circuit rows ────────────────────────────────────────────
+        for item in sub_items {
+            let sub_label = format!("  └ {}", item.sub_circuit_name);
+            let desc = if item.description.is_empty() {
+                "—".to_string()
+            } else {
+                item.description.clone()
+            };
+            table.add_row(vec![
+                add_style(Cell::new(&sub_label), tc_teal, false),
+                add_style(Cell::new(format!("{:.1}", item.score)), tc_teal, true),
+                add_style(
+                    Cell::new(format!("{}p", item.planet_count)),
+                    tc_beige,
+                    false,
+                ),
+                add_style(
+                    Cell::new(format!("{}ch", item.channel_count)),
+                    tc_beige,
+                    false,
+                ),
+                add_style(Cell::new(&desc), tc_beige, false),
+            ]);
+        }
+    }
+
+    writeln!(out, "{}", table).unwrap();
 }

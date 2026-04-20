@@ -48,6 +48,22 @@ pub struct MetaObject {
     pub description: String,
 }
 
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct SubCircuitMeta {
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct CircuitMeta {
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub sub_circuits: HashMap<String, SubCircuitMeta>,
+}
+
 /// Center data from DB
 #[derive(Debug, Deserialize, Clone)]
 pub struct CenterData {
@@ -57,8 +73,6 @@ pub struct CenterData {
     pub normal: String,
     pub distorted: String,
 }
-
-
 
 /// PHS Block (Colors/Tones)
 #[derive(Debug, Deserialize, Clone)]
@@ -78,7 +92,7 @@ pub struct HdDatabase {
     pub types: HashMap<String, MetaObject>,
     pub profiles: HashMap<String, MetaObject>,
     #[serde(default)]
-    pub strategies: HashMap<String, String>, 
+    pub strategies: HashMap<String, String>,
     pub authorities: HashMap<String, MetaObject>,
     #[serde(default)]
     pub fears: HashMap<String, String>,
@@ -92,6 +106,8 @@ pub struct HdDatabase {
     pub vision: Option<PhsBlock>,
     #[serde(default)]
     pub crosses: HashMap<String, MetaObject>,
+    #[serde(default)]
+    pub circuits: HashMap<String, CircuitMeta>,
 }
 
 use once_cell::sync::Lazy;
@@ -116,6 +132,6 @@ pub fn get_database(lang: &str) -> &'static HdDatabase {
     match lang {
         "en" => &DB_EN,
         "es" => &DB_ES,
-        _ => &DB_RU, // Default to RU
+        _ => &DB_RU,
     }
 }

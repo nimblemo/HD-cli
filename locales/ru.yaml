@@ -46,6 +46,7 @@ cli:
     personality: "ОПИСАНИЯ ЛИЧНОСТИ (Personality)"
     design: "ОПИСАНИЯ ДИЗАЙНА (Design)"
     extra: "ДОПОЛНИТЕЛЬНО"
+    circuits: "КОНТУРЫ"
     fear: "СТРАХИ"
     sexuality: "СЕКСУАЛЬНОСТЬ"
     love: "ЛЮБОВЬ"
@@ -75,6 +76,10 @@ cli:
     fear: "Страх:"
     sexuality: "Сексуальность:"
     love: "Любовь:"
+    circuit: "Контур"
+    score: "Балл"
+    planets: "Планеты"
+    channels: "Каналы"
 
 strategy:
   generator: "Ждать отклика"
@@ -91,6 +96,3 @@ angle:
 
 cross:
   default_fmt: "Крест %{angle} (%{p_sun}/%{p_earth} | %{d_sun}/%{d_earth})"
-
-
-
