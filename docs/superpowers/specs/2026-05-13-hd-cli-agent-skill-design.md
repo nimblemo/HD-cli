@@ -61,6 +61,18 @@ hd-cli-agent-skill/
   skills/
     hd-cli/
       SKILL.md
+      .local/
+        calculations.jsonl
+        people/
+          <person-id>.json
+        charts/
+          <chart-id>.json
+        dialogs/
+          <dialog-id>.json
+        artifacts/
+          <artifact-id>.json
+        notebooklm/
+          sources.json
       scripts/
         install.sh
         install.ps1
@@ -81,6 +93,24 @@ hd-cli-agent-skill/
   - `~/.cache/hd-cli/{version}/hd-cli.exe` (Windows)
 - Симлинк/алиас на текущую версию:
   - `~/.cache/hd-cli/current/hd-cli[.exe]` (копия или симлинк, зависит от платформы)
+
+### 3.4. Персистентное хранение (локально в директории скилла)
+Требование: хранить данные персистентно локально в директории скилла.
+
+- Local state root: `<skill_root>/skills/hd-cli/.local/`
+- Данные хранятся в JSON/JSONL, чтобы их можно было бэкапить, переносить и инспектировать.
+- Все записи содержат:
+  - `id` (строка UUID/slug)
+  - `created_at` (ISO 8601)
+  - `updated_at` (ISO 8601)
+
+Файлы:
+- `calculations.jsonl` — журнал всех расчётов (append-only).
+- `people/<person-id>.json` — сущность “человек”.
+- `charts/<chart-id>.json` — сохранённая “карта” (compact-версия без описательных полей).
+- `dialogs/<dialog-id>.json` — диалог, связанный с 1+ людьми/картами.
+- `artifacts/<artifact-id>.json` — артефакт диалога: вопрос пользователя + прикреплённые данные карт + ответ NotebookLM.
+- `notebooklm/sources.json` — маппинг локальных сущностей на NotebookLM sources (source-id, заголовок, контрольная сумма контента, время синхронизации).
 
 ## 4. Установщик: алгоритм
 
@@ -146,16 +176,92 @@ hd-cli-agent-skill/
 - raw:
   - всегда вернуть `exit_code`, `stdout`, `stderr`
 
-## 6. Безопасность и приватность
+### 5.4. Данные карт без текстовых описаний (compact chart)
+Требование: при прикреплении данных карт к NotebookLM не включать текстовые описания из расчётов.
+
+Источник данных: JSON вывод `hd-cli --format json` (см. модель [HdChart](file:///workspace/src/models.rs#L54-L99)).
+
+Правило “compact”:
+- Сохранять только структурные поля и идентификаторы.
+- Удалять/не сохранять следующие поля (если присутствуют):
+  - `*_description` (например, `type_description`, `profile_description`, `authority_description`, `strategy_description`, `cross_description`)
+  - `personality[].gate_name`, `personality[].gate_description`, `personality[].line_description`
+  - `design[].gate_name`, `design[].gate_description`, `design[].line_description`
+  - `channels[].description`
+  - `centers[].behavior_normal`, `centers[].behavior_distorted`
+  - любые `InfoItem.description` и подобные блоки, если они добавляются в JSON
+
+Хранимый JSON “compact chart” должен включать (минимум):
+- `birth_date`, `birth_time`, `utc_offset`
+- `type`, `profile`, `authority`, `strategy`, `incarnation_cross`
+- `personality[]`: `planet`, `index`, `longitude`, `degree`, `zodiac_sign`, `gate`, `line`, `color`, `tone`, `base`
+- `design[]`: то же
+- `channels[]`: `key`, `name`
+- `centers[]`: `name`, `defined`
+
+## 6. Интеграция с NotebookLM через `notebooklm-cli`
+
+### 6.1. Зависимость от `nlm-cli-skill`
+Требование: система зависит от скилла `nlm-cli-skill` и использует его правила/ограничения.
+
+Источник: [nlm-cli-skill/SKILL.md](https://raw.githubusercontent.com/jacob-bd/notebooklm-cli/main/nlm-cli-skill/SKILL.md)
+
+Ключевые правила интеграции:
+- Перед любыми операциями проверять аутентификацию (`nlm login --check`), иначе просить пользователя выполнить `nlm login`.
+- Не использовать `nlm chat start` (интерактивный REPL). Только `nlm notebook query`.
+- Все запросы выполняются в фиксированном NotebookLM ноутбуке:
+  - `notebook_id = c5dd30c7-da41-49a5-a0ce-74ed7ad7ce1b`
+  - URL: `https://notebooklm.google.com/notebook/c5dd30c7-da41-49a5-a0ce-74ed7ad7ce1b`
+
+### 6.2. Привязка людей/карт к NotebookLM (через sources)
+Выбранная стратегия: “через source”.
+
+- Для каждого `person-id` поддерживать один NotebookLM source типа `--text` с title вида:
+  - `HD Chart: <display_name> (<person-id>)`
+- Контент source: JSON “compact chart” (см. раздел 5.4), возможно упакованный в один объект:
+  - `{ "person": {...}, "chart": {...}, "chart_id": "...", "calculation": {...} }`
+- Локально сохранять маппинг в `.local/notebooklm/sources.json`:
+  - `person_id -> { source_id, title, content_sha256, updated_at }`
+
+### 6.3. Диалоги и артефакты (локально)
+Сущности:
+- Person:
+  - `id`, `display_name`, (опционально) заметки
+  - список связанных `chart_id` (история)
+- Calculation (журнал, JSONL):
+  - `calculation_id`, `person_id`, входные параметры (`date/time/utc/lang`), `chart_id`, `hd_cli_version`, `created_at`
+- Dialog:
+  - `id`, `title`, `participant_person_ids[]`, `notebook_id` (фиксированный), `conversation_id` (если используется для follow-up), `artifact_ids[]`
+- Artifact:
+  - `id`, `dialog_id`, `created_at`
+  - `user_query` (текст пользователя)
+  - `attached_people[]`: массив `{ person_id, chart_id, chart_compact }`
+  - `notebooklm`: `{ notebook_id, conversation_id?, request_text, response_text, status }`
+
+Поведение:
+- При новом вопросе в рамках диалога:
+  1) Убедиться, что все участники имеют актуальные sources в NotebookLM (создать/обновить при необходимости).
+  2) Выполнить `nlm notebook query <notebook-id> "..."`:
+     - Если у диалога уже есть `conversation_id` — передать его флагом `--conversation-id`.
+     - Если `conversation_id` ещё нет — сохранить `conversation_id` из ответа (если CLI его возвращает), чтобы продолжать контекстно.
+  3) Сохранить Artifact локально, включая снимок `chart_compact` для каждого участника (чтобы артефакт был самодостаточным).
+
+## 7. Безопасность и приватность
 - Не логировать токены/credential’ы.
 - При запросах к GitHub API использовать публичный доступ без токена; если пользователь настроил токен локально — допустимо поддержать через env var, но не требовать.
 - Не записывать скачанные файлы вне cache root.
 
-## 7. Критерии приемки
+## 8. Критерии приемки
 - При наличии GitHub Release с ассетом под платформу:
   - Skill скачивает latest release, кладёт в кэш, запускает `hd-cli`, возвращает результат.
 - При отсутствии релизов или недоступности GitHub API:
   - Skill сообщает причину и предлагает локальную установку из `nimblemo/Human-Design-cli`.
 - Поддержаны оба режима (structured + raw).
+- Персистентно сохраняются:
+  - список расчётов (calculations.jsonl)
+  - люди/карты
+  - диалоги и артефакты диалогов с прикреплёнными compact-данными карт
+- NotebookLM интеграция:
+  - источники (sources) создаются/обновляются на человека
+  - запросы выполняются через `nlm notebook query` в указанном notebook_id
 - Нет секретов в логах/файлах.
-
