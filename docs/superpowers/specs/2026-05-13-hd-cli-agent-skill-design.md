@@ -71,6 +71,9 @@ Human-Design-cli/
 - Исходники хранятся в `skills/hd-cli/scripts/src/*.ts`.
 - Скрипты исполняются через Node.js из `skills/hd-cli/scripts/dist/*.js`.
 - `dist/` коммитится в репозиторий, чтобы рантайм скилла не зависел от установки `typescript`/`npm install` на машине пользователя.
+- Основной способ запуска через npx:
+  - `npx --yes --package file:./skills/hd-cli/scripts -- hd-cli-skill --help`
+  - `npx --yes --package file:./skills/hd-cli/scripts -- hd-cli-skill install`
 
 ### 2.2. Контракт `SKILL.md`
 `skills/hd-cli/SKILL.md` должен описывать:

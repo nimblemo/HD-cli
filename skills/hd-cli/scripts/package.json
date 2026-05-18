@@ -1,0 +1,14 @@
+{
+  "name": "hd-cli-skill-scripts",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Local scripts for hd-cli Agent Skill (run via npx)",
+  "license": "UNLICENSED",
+  "bin": {
+    "hd-cli-skill": "dist/cli.js",
+    "hd-cli-skill-install": "dist/install.js",
+    "hd-cli-skill-run": "dist/hd_cli_run.js",
+    "hd-cli-skill-compact": "dist/hd_compact.js",
+    "hd-cli-skill-nlm-query": "dist/nlm_query.js"
+  }
+}
