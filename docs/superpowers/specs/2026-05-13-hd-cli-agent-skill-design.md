@@ -37,13 +37,24 @@ Human-Design-cli/
         people/
         dialogs/
       scripts/
-        install.py
-        platform.py
-        github_release.py
-        hd_cli_run.py
-        hd_compact.py
-        state_io.py
-        nlm_query.py
+        package.json
+        tsconfig.json
+        src/
+          install.ts
+          platform.ts
+          github_release.ts
+          hd_cli_run.ts
+          hd_compact.ts
+          state_io.ts
+          nlm_query.ts
+        dist/
+          install.js
+          platform.js
+          github_release.js
+          hd_cli_run.js
+          hd_compact.js
+          state_io.js
+          nlm_query.js
       templates/
         person.md
         chart.md
@@ -55,6 +66,11 @@ Human-Design-cli/
         error.download_release.md
         error.local_install.md
 ```
+
+### 2.1.1. Правило исполнения скриптов (TypeScript)
+- Исходники хранятся в `skills/hd-cli/scripts/src/*.ts`.
+- Скрипты исполняются через Node.js из `skills/hd-cli/scripts/dist/*.js`.
+- `dist/` коммитится в репозиторий, чтобы рантайм скилла не зависел от установки `typescript`/`npm install` на машине пользователя.
 
 ### 2.2. Контракт `SKILL.md`
 `skills/hd-cli/SKILL.md` должен описывать:
